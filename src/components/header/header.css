@@ -1,0 +1,317 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Inter, sans-serif;
+}
+
+body {
+  background: #090b11;
+}
+
+.header {
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+
+  backdrop-filter: blur(18px);
+  background: rgba(9, 11, 17, 0.72);
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar {
+  max-width: 1250px;
+
+  margin: auto;
+
+  height: 82px;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 0 30px;
+}
+
+.logo-con {
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  cursor: pointer;
+}
+
+.logo-icon {
+  width: 48px;
+
+  height: 48px;
+
+  border-radius: 16px;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  font-size: 23px;
+
+  font-weight: 900;
+
+  color: white;
+
+  background: linear-gradient(135deg, #6c63ff, #5b8cff);
+
+  box-shadow: 0 0 30px rgba(108, 99, 255, 0.35);
+
+  transition: 0.35s;
+}
+
+.logo-con:hover .logo-icon {
+  transform: rotate(-8deg) scale(1.08);
+}
+
+.logo-text {
+  display: flex;
+
+  flex-direction: column;
+}
+
+.logo-text h3 {
+  color: white;
+
+  font-size: 22px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.5px;
+}
+
+.logo-text span {
+  color: #8b94a7;
+
+  font-size: 12px;
+}
+
+.nav-links {
+  display: flex;
+
+  align-items: center;
+
+  gap: 38px;
+
+  list-style: none;
+}
+
+.nav-links li {
+  color: #a4adc0;
+
+  font-size: 15px;
+
+  font-weight: 500;
+
+  cursor: pointer;
+
+  position: relative;
+
+  transition: 0.35s;
+}
+
+.nav-links li:hover {
+  color: white;
+}
+
+.nav-links li::after {
+  content: "";
+
+  position: absolute;
+
+  bottom: -8px;
+
+  left: 0;
+
+  width: 0;
+
+  height: 2px;
+
+  background: #6c63ff;
+
+  transition: 0.35s;
+}
+
+.nav-links li:hover::after {
+  width: 100%;
+}
+
+.nav-auth {
+  display: flex;
+
+  gap: 15px;
+}
+
+.login-btn {
+  width: 110px;
+
+  height: 46px;
+
+  background: transparent;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  color: white;
+
+  border-radius: 14px;
+
+  cursor: pointer;
+
+  font-size: 15px;
+
+  transition: 0.35s;
+}
+
+.login-btn:hover {
+  background: #171c29;
+}
+
+.start-btn {
+  height: 46px;
+
+  padding: 0 28px;
+
+  border: none;
+
+  cursor: pointer;
+
+  color: white;
+
+  font-weight: 700;
+
+  border-radius: 14px;
+
+  font-size: 15px;
+
+  background: linear-gradient(135deg, #6c63ff, #4f8cff);
+
+  box-shadow: 0 15px 35px rgba(91, 140, 255, 0.35);
+
+  transition: 0.35s;
+}
+
+.start-btn:hover {
+  transform: translateY(-3px);
+
+  box-shadow: 0 20px 40px rgba(91, 140, 255, 0.45);
+}
+/* ======================================================
+   RESPONSIVE MEDIA QUERIES FOR HEADER COMPONENT
+   ====================================================== */
+
+/* 1. Laptops & Medium Screens (Under 1024px) */
+@media (max-width: 1024px) {
+  .header-wrapper {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+
+  .nav-links {
+    gap: 20px; /* Compress link spacing */
+  }
+
+  .nav-links a {
+    font-size: 14px;
+  }
+}
+
+/* 2. Tablets & Mobile Screens (Under 768px) */
+@media (max-width: 768px) {
+  .header-outer {
+    padding: 14px 0;
+  }
+
+  /* Desktop Links & Buttons Ko Hide Karo */
+  .nav-links,
+  .header-actions {
+    display: none;
+  }
+
+  /* Hamburger Menu Toggle Icon Trigger (Show on Mobile) */
+  .hamburger-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  .hamburger-btn span {
+    width: 100%;
+    height: 2px;
+    background-color: #ffffff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+
+  /* Mobile Dropdown Menu Drawer (Jab Open Ho) */
+  .mobile-menu {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #090d16;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 20px;
+    gap: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  }
+
+  .mobile-menu a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 15px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  .mobile-menu a:hover {
+    color: #00c853;
+  }
+
+  .mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .mobile-actions button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+}
+
+/* 3. Small Mobile Devices (Under 480px) */
+@media (max-width: 480px) {
+  .header-brand h1, 
+  .logo-text {
+    font-size: 18px; /* Mobile Logo Scaling */
+  }
+
+  .glow-dot {
+    width: 7px;
+    height: 7px;
+  }
+}
