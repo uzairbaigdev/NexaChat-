@@ -39,6 +39,7 @@ body {
 }
 
 /* ============ PAGE LAYOUT ============ */
+.login-page,
 .signup-page {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -90,6 +91,7 @@ body {
   0%, 100% { transform: translate(0, 0); }
   50% { transform: translate(26px, 22px); }
 }
+
 @keyframes drift-b {
   0%, 100% { transform: translate(0, 0); }
   50% { transform: translate(-22px, -18px); }
@@ -279,6 +281,7 @@ body {
   flex-shrink: 0;
 }
 
+.login-form,
 .signup-form {
   display: flex;
   flex-direction: column;
@@ -334,6 +337,8 @@ body {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
+/* Submit Button for both Login & Signup */
+.login-btn,
 .signup-btn {
   margin-top: 6px;
   padding: 13px;
@@ -352,12 +357,14 @@ body {
   box-shadow: 0 10px 24px rgba(99, 102, 241, 0.3);
 }
 
+.login-btn:hover:not(:disabled),
 .signup-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   filter: brightness(1.05);
   box-shadow: 0 14px 30px rgba(99, 102, 241, 0.38);
 }
 
+.login-btn:active:not(:disabled),
 .signup-btn:active:not(:disabled) {
   transform: translateY(0);
 }
@@ -411,20 +418,23 @@ body {
   height: 20px;
 }
 
-.login-text {
+.login-text,
+.signup-text {
   text-align: center;
   margin-top: 24px;
   color: var(--ink-soft);
   font-size: 14px;
 }
 
-.login-text a {
+.login-text a,
+.signup-text a {
   color: var(--indigo-deep);
   text-decoration: none;
   font-weight: 600;
 }
 
-.login-text a:hover {
+.login-text a:hover,
+.signup-text a:hover {
   text-decoration: underline;
 }
 
@@ -464,6 +474,7 @@ input:disabled {
 }
 
 @media (max-width: 960px) {
+  .login-page,
   .signup-page {
     grid-template-columns: 1fr;
   }

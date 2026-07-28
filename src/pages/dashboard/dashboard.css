@@ -349,10 +349,12 @@ body {
   flex-direction: column;
 }
 
-.profile-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #fff;
+.profile-email {
+  font-size: 15px;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-status {

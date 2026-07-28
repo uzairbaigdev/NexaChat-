@@ -1,26 +1,92 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
-import {auth,onAuthStateChanged } from "../../firebaseConfig";
-
-const conversations = [];
-const messages = [];
+import {
+  db, auth, onAuthStateChanged, query, where, getDocs,
+  collection, addDoc,serverTimestamp
+} from "../../firebaseConfig";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const conversations = [];
+  const [messages, setMessages] = useState([]);
   const [activeId, setActiveId] = useState(null);
-  const activeChat = conversations.find((c) => c.id === activeId) || null;
+  const [userEmail, setUserEmail] = useState("");
+  const [contacts, setContacts] = useState([]);
+  const [messageText, setMessageText] = useState("");
+  const activeChat = contacts.find((c) => c.id === activeId) || null;
+  const navigate = useNavigate();
+  const uid = window.localStorage.getItem("uid");
 
   // checking if user exist or not
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         navigate("/signup");
+      } else {
+        setUserEmail(user.email);
       }
     });
     return () => unsubscribe();
   }, [navigate]);
- 
+
+  //working on getting messages for the active chat
+  useEffect(() => {
+    if (!activeChat) return;
+
+    const getMessages = async () => {
+      try {
+        const sentQuery = query(
+          collection(db, "messages"),
+          where("from", "==", uid),
+          where("to", "==", activeChat.id)
+        );
+        const receivedQuery = query(
+          collection(db, "messages"),
+          where("from", "==", activeChat.id),
+          where("to", "==", uid)
+        );
+
+        const [sentSnap, receivedSnap] = await Promise.all([
+          getDocs(sentQuery),
+          getDocs(receivedQuery),
+        ]);
+
+        const list = [];
+        sentSnap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+        receivedSnap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+
+        // sort messages in ascending order (oldest first)
+        list.sort((a, b) => {
+          const aTime = a.Time?.toMillis ? a.Time.toMillis() : 0;
+          const bTime = b.Time?.toMillis ? b.Time.toMillis() : 0;
+          return aTime - bTime;
+        });
+
+        setMessages(list);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getMessages();
+  }, [activeChat, uid]);
+
+  //working on getting contacts
+  const getContact = async () => {
+    try {
+      const q = query(collection(db, "users"), where("UID", "!=", uid));
+      const querySnapshot = await getDocs(q);
+      const list = [];
+      querySnapshot.forEach((doc) => {
+        // console.log(doc.id, " => ", doc.data());
+        list.push({ id: doc.id, ...doc.data() });
+      });
+      setContacts(list);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  getContact();
 
   return (
     <div className="dashboard">
@@ -60,7 +126,7 @@ const Dashboard = () => {
           </div>
 
           <div className="chat-list">
-            {conversations.length === 0 ? (
+            {contacts.length === 0 ? (
               <div className="list-empty-state">
                 <div className="empty-icon">
                   <svg viewBox="0 0 20 20" fill="currentColor">
@@ -74,25 +140,24 @@ const Dashboard = () => {
                 <p>No conversations yet</p>
               </div>
             ) : (
-              conversations.map((c) => (
+              contacts.map((c) => (
                 <button
                   key={c.id}
                   className={`chat-item ${c.id === activeId ? "chat-item-active" : ""}`}
                   onClick={() => setActiveId(c.id)}
                 >
                   <div className="avatar">
-                    {c.initials}
-                    {c.online && <span className="status-dot"></span>}
+                    {(c.name || c.email || "?").charAt(0).toUpperCase()}
                   </div>
                   <div className="chat-item-body">
                     <div className="chat-item-top">
-                      <span className="chat-item-name">{c.name}</span>
-                      <span className="chat-item-time">{c.time}</span>
+                      <span className="chat-item-name">{c.name || c.email}</span>
                     </div>
-                    <div className="chat-item-bottom">
-                      <span className="chat-item-preview">{c.lastMessage}</span>
-                      {c.unread > 0 && <span className="unread-badge">{c.unread}</span>}
-                    </div>
+                    {c.name && c.email && (
+                      <div className="chat-item-bottom">
+                        <span className="chat-item-preview">{c.email}</span>
+                      </div>
+                    )}
                   </div>
                 </button>
               ))
@@ -106,9 +171,10 @@ const Dashboard = () => {
               </svg>
             </div>
             <div className="profile-info">
-              <span className="profile-name">My Profile</span>
+              {/* <span className="profile-name">My Profile</span> */}
+              <span className="profile-email">{userEmail}</span>
             </div>
-            <button className="icon-btn" aria-label="Settings" onClick={()=> navigate("/settings")}>
+            <button className="icon-btn" aria-label="Settings" onClick={() => navigate("/settings")}>
               <svg viewBox="0 0 20 20" fill="currentColor">
                 <path
                   fillRule="evenodd"
@@ -128,14 +194,10 @@ const Dashboard = () => {
             <header className="chat-header">
               <div className="chat-header-left">
                 <div className="avatar">
-                  {activeChat.initials}
-                  {activeChat.online && <span className="status-dot"></span>}
+                  {(activeChat.name || activeChat.email || "?").charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div className="chat-header-name">{activeChat.name}</div>
-                  <div className="chat-header-status">
-                    {activeChat.online ? "Online" : "Offline"}
-                  </div>
+                  <div className="chat-header-name">{activeChat.name || activeChat.email}</div>
                 </div>
               </div>
               <div className="chat-header-actions">
@@ -168,8 +230,8 @@ const Dashboard = () => {
                 </div>
               ) : (
                 messages.map((m) => (
-                  <div key={m.id} className={`message-row ${m.from === "me" ? "message-row-me" : ""}`}>
-                    <div className={`message-bubble ${m.from === "me" ? "bubble-me" : "bubble-them"}`}>
+                  <div key={m.id} className={`message-row ${m.from === uid ? "message-row-me" : ""}`}>
+                    <div className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}>
                       {m.text}
                       <span className="message-time">{m.time}</span>
                     </div>
@@ -185,9 +247,25 @@ const Dashboard = () => {
                 </svg>
               </button>
               <div className="composer-input-shell">
-                <input type="text" placeholder="Type a message..." />
+                <input type="text" placeholder="Type a message..."
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                />
               </div>
-              <button className="send-btn" aria-label="Send message">
+              <button className="send-btn" aria-label="Send message"
+                onClick={async () => {
+                  try {
+                    const docRef = await addDoc(collection(db, "messages"), {
+                      text:messageText,
+                      to:activeChat.id,
+                      from:uid,
+                      Time:serverTimestamp()
+                    });
+                    console.log("Document written with ID: ", docRef.id);
+                  } catch (error) {
+                    console.error(error);
+                  }
+                }}>
                 <svg viewBox="0 0 20 20" fill="currentColor">
                   <path d="M3.4 2.4a1 1 0 00-1.36 1.28L4.5 10l-2.46 6.32A1 1 0 003.4 17.6l14-7a1 1 0 000-1.8l-14-7z" />
                 </svg>

@@ -1,74 +1,60 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import "./signup.css";
-import {db,auth,doc,createUserWithEmailAndPassword,setDoc,serverTimestamp,signInWithPopup,provider,
-getAdditionalUserInfo,onAuthStateChanged} from "../../firebaseConfig.js";
+import React, { useState,useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "./login.css";
+import {auth,signInWithEmailAndPassword,signInWithPopup,provider,db,doc,setDoc,
+serverTimestamp,getAdditionalUserInfo,onAuthStateChanged} from "../../firebaseConfig";
 
-const Signup = () => {
-  const navigate = useNavigate();
-  const [nameInp, setNameInp] = useState("");
+const Login = () => {
   const [emailInp, setEmailInp] = useState("");
   const [passwordInp, setPasswordInp] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // State to manage loader
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // If user is already logged in, skip signup and go straight to dashboard
+ // If user is already logged in, skip signup and go straight to dashboard
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         navigate("/dashboard");
       }
     });
-
     return () => unsubscribe();
   }, [navigate]);
 
-  // Working on email/password authentication
+
+  // Email / Password Login Logic
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!nameInp.trim()) {
-      setError("Please enter a username.");
-      return;
-    }
     if (!emailInp.trim()) {
-      setError("Please enter an email address.");
+      setError("Please enter your email address.");
       return;
     }
     if (!passwordInp) {
-      setError("Please enter a password.");
+      setError("Please enter your password.");
       return;
     }
 
     setLoading(true);
 
     try {
-      let userCred = await createUserWithEmailAndPassword(auth, emailInp, passwordInp);
-      console.log(userCred)
-      await setDoc(doc(db, "users", userCred.user.uid), {
-        username: nameInp,
-        email: emailInp,
-        UID:userCred.user.uid,  
-        createdAt: serverTimestamp()
-      });
-      //pushing UID to localStorage
-      window.localStorage.setItem("uid",userCred.user.uid);  
-
-      setNameInp("");
-      setEmailInp("");
-      setPasswordInp("");
-
-      navigate("/dashboard");
+    const userCred = await signInWithEmailAndPassword(auth,emailInp,passwordInp);
+    // Save UID in localStorage
+    window.localStorage.setItem("uid", userCred.user.uid);
+    console.log("Logged in successfully!");
+    setEmailInp("");
+    setPasswordInp("");
+    navigate("/dashboard");
     } catch (err) {
-      console.error("Something went wrong", err);
+      console.error("Login failed", err);
       setError(err.message.replace("Firebase: ", ""));
     } finally {
       setLoading(false);
     }
   };
 
-  // Working on Google Btn
+  // Google Login Logic
   const googleBtn = async () => {
     setError("");
     setLoading(true);
@@ -76,10 +62,9 @@ const Signup = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      //push UID to localStorage
-      window.localStorage.setItem("uid",user.uid)
-
-      // Check if this is a new Google account
+      // Save UID in localStorage
+      window.localStorage.setItem("uid", user.uid);
+      // Check is the user new or not
       const additionalInfo = getAdditionalUserInfo(result);
       if (additionalInfo.isNewUser) {
         await setDoc(doc(db, "users", user.uid), {
@@ -88,12 +73,11 @@ const Signup = () => {
           UID:user.uid,
           createdAt: serverTimestamp(),
         });
-        console.log("New user added to Firestore");
-      } else {
-        console.log("Existing user, data already exists");
       }
 
+      console.log("Google Login successful!");
       navigate("/dashboard");
+      // navigate('/chat');
     } catch (err) {
       console.error(err);
       setError(err.message.replace("Firebase: ", ""));
@@ -103,9 +87,8 @@ const Signup = () => {
   };
 
   return (
-  <>
     <div className="signup-page">
-      {/* ---------- Left: brand / visual panel ---------- */}
+      {/* ---------- Left: Brand / Visual Panel ---------- */}
       <aside className="visual-panel">
         <div className="glow glow-a"></div>
         <div className="glow glow-b"></div>
@@ -160,27 +143,21 @@ const Signup = () => {
           </div>
 
           <h1 className="visual-headline">
-            Every conversation.
-            <br />
-            Everywhere.
+            Welcome back to <br />
+            NexaChat.
           </h1>
           <p className="visual-sub">
-            Fast, secure messaging built for global scale. Create an account
-            and start talking to anyone, anywhere, instantly.
+            Pick up right where you left off. Log in to access your conversations and stay connected.
           </p>
 
           <div className="chat-chips">
             <div className="chat-chip chip-1">
               <span className="chip-dot"></span>
-              Hey! Are we still on for today?
+              Welcome back! Good to see you again.
             </div>
             <div className="chat-chip chip-2">
               <span className="chip-dot"></span>
-              Just landed, calling you now
-            </div>
-            <div className="chat-chip chip-3">
-              <span className="chip-dot"></span>
-              Sent — delivered in 0.2s
+              You have 3 unread messages
             </div>
           </div>
         </div>
@@ -188,7 +165,7 @@ const Signup = () => {
         <p className="visual-footer">Trusted by people in 120+ countries</p>
       </aside>
 
-      {/* ---------- Right: form panel ---------- */}
+      {/* ---------- Right: Form Panel ---------- */}
       <main className="form-panel">
         <div className="form-panel-inner">
           <div className="mobile-brand">
@@ -209,8 +186,8 @@ const Signup = () => {
             <span className="brand-word brand-word-sm">NexaChat</span>
           </div>
 
-          <h2 className="form-title">Create your account</h2>
-          <p className="form-subtitle">It takes less than a minute</p>
+          <h2 className="form-title">Log in to your account</h2>
+          <p className="form-subtitle">Enter your details below to continue</p>
 
           {error ? (
             <div className="error-banner">
@@ -226,22 +203,7 @@ const Signup = () => {
           ) : null}
 
           <form className="signup-form" onSubmit={handleSubmit}>
-            <div className="input-group">
-              <label>Username</label>
-              <div className="input-shell">
-                <svg className="input-icon" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 9a4 4 0 100-8 4 4 0 000 8zM10 11c-4.42 0-8 2.24-8 5v1a1 1 0 001 1h14a1 1 0 001-1v-1c0-2.76-3.58-5-8-5z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Enter your username"
-                  value={nameInp}
-                  disabled={loading}
-                  onChange={(e) => setNameInp(e.target.value)}
-                />
-              </div>
-            </div>
-
+            {/* Email Field */}
             <div className="input-group">
               <label>Email</label>
               <div className="input-shell">
@@ -259,16 +221,17 @@ const Signup = () => {
               </div>
             </div>
 
+            {/* Password Field */}
             <div className="input-group">
               <label>Password</label>
               <div className="input-shell">
-                <svg className="input-icon" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 2a4 4 0 00-4 4v2H5a1 1 0 00-1 1v7a2 2 0 002 2h8a2 2 0 002-2V9a1 1 0 00-1-1h-1V6a4 4 0 00-4-4zm2 6V6a2 2 0 10-4 0v2h4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+               <svg className="input-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                fillRule="evenodd"
+                d="M10 2a4 4 0 0 0-4 4v2H5a1 1 0 0 0-1 1v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9a1 1 0 0 0-1-1h-1V6a4 4 0 0 0-4-4zm2 6V6a2 2 0 1 0-4 0v2h4z"
+                clipRule="evenodd"
+                />
+               </svg>
                 <input
                   type="password"
                   placeholder="Enter your password"
@@ -280,7 +243,7 @@ const Signup = () => {
             </div>
 
             <button type="submit" className="signup-btn" disabled={loading}>
-              {loading ? <span className="btn-spinner"></span> : "Create Account"}
+              {loading ? <span className="btn-spinner"></span> : "Log In"}
             </button>
           </form>
 
@@ -308,16 +271,13 @@ const Signup = () => {
           </button>
 
           <p className="login-text">
-            Already have an account?
-            <a href="/login"> Log in</a>
+            Don't have an account?
+            <Link to="/signup"> Sign up</Link>
           </p>
         </div>
       </main>
     </div>
-
-  
-  </>
- );
+  );
 };
 
-export default Signup;
+export default Login;
