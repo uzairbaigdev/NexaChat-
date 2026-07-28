@@ -13,6 +13,7 @@ const Dashboard = () => {
   const [userEmail, setUserEmail] = useState("");
   const [contacts, setContacts] = useState([]);
   const [messageText, setMessageText] = useState("");
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const activeChat = contacts.find((c) => c.id === activeId) || null;
   const navigate = useNavigate();
   const uid = window.localStorage.getItem("uid");
@@ -88,6 +89,63 @@ const Dashboard = () => {
   }
   getContact();
 
+//working on Global search 
+  if (isGlobalSearchOpen) {
+    return (
+      <div className="global-search-page">
+        <header className="global-search-page-header">
+          <button
+            className="global-search-back"
+            aria-label="Back to dashboard"
+            onClick={() => setIsGlobalSearchOpen(false)}
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M12.7 4.3a1 1 0 010 1.4L8.42 10l4.3 4.3a1 1 0 01-1.42 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+
+          <div className="global-search-page-field">
+            <svg className="global-search-field-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M9 3a6 6 0 104.47 10.03l3.75 3.75a1 1 0 001.41-1.41l-3.75-3.75A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <input
+              type="text"
+              className="global-search-page-input"
+              placeholder="Search accounts by name or email..."
+              autoFocus
+            />
+          </div>
+        </header>
+
+        <section className="global-search-page-body">
+          <div className="global-search-placeholder">
+            <div className="empty-icon empty-icon-lg">
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M9 3a6 6 0 104.47 10.03l3.75 3.75a1 1 0 001.41-1.41l-3.75-3.75A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <p>Start typing to search accounts across NexaChat</p>
+            <span className="global-search-hint">
+              Results will appear here as you type
+            </span>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard">
       {/* ---------- Left: chat list panel ---------- */}
@@ -112,6 +170,20 @@ const Dashboard = () => {
               </svg>
             </span>
             <span className="brand-word">NexaChat</span>
+
+            <button
+              className="global-search-trigger"
+              aria-label="Global Search"
+              onClick={() => setIsGlobalSearchOpen(true)}
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M9 3a6 6 0 104.47 10.03l3.75 3.75a1 1 0 001.41-1.41l-3.75-3.75A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
           </div>
 
           <div className="search-shell">
