@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import {
@@ -21,6 +21,14 @@ const Dashboard = () => {
   const [messageText, setMessageText] = useState("");
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchInputValue, setGlobalSearchInputValue] = useState("");
+
+  // Controls the "3 dots" more-options menu next to the global search icon
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef(null);
+
+  // Controls the standalone "Requests" page opened from the "3 dots" menu
+  const [isRequestsPageOpen, setIsRequestsPageOpen] = useState(false);
+  const [requestsTab, setRequestsTab] = useState("received"); // "received" | "sent"
 
   const activeChat = contacts.find((c) => c.id === activeId) || null;
   const navigate = useNavigate();
@@ -112,6 +120,31 @@ const Dashboard = () => {
     }
   }, [uid]);
 
+  // Close the "more options" menu whenever the user clicks outside of it
+  useEffect(() => {
+    if (!isMoreMenuOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMoreMenuOpen]);
+
+  // Opens the standalone Requests page from the "Request" menu option
+  const handleOpenRequestFromMenu = () => {
+    setIsMoreMenuOpen(false);
+    setIsRequestsPageOpen(true);
+  };
+
+  // Closes the Requests page and returns to the main dashboard
+  const handleCloseRequestsPage = () => {
+    setIsRequestsPageOpen(false);
+  };
+
   // Handle sending message
   const handleSendMessage = async () => {
     if (!messageText.trim() || !activeChat) return;
@@ -151,7 +184,69 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      {isGlobalSearchOpen ? (
+      {isRequestsPageOpen ? (
+        // request page
+        <div className="requests-page">
+          <header className="requests-page-header">
+            <button
+              className="requests-back"
+              aria-label="Back to dashboard"
+              onClick={handleCloseRequestsPage}
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M12.7 4.3a1 1 0 010 1.4L8.42 10l4.3 4.3a1 1 0 01-1.42 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+            <h1 className="requests-page-title">Requests</h1>
+
+            <div className="requests-tabs">
+              <button
+                className={`requests-tab ${requestsTab === "received" ? "requests-tab-active" : ""}`}
+                onClick={() => setRequestsTab("received")}
+              >
+                Received
+              </button>
+              <button
+                className={`requests-tab ${requestsTab === "sent" ? "requests-tab-active" : ""}`}
+                onClick={() => setRequestsTab("sent")}
+              >
+                Sent
+              </button>
+            </div>
+          </header>
+
+          {/* <section className="requests-page-body">
+            <div className="requests-list">
+              {(requestsTab === "received" ? receivedRequests : sentRequests).map((request) => (
+                <div key={request.id} className="request-card">
+                  <div className="request-user-info">
+                    <div className="avatar">{request.name.charAt(0).toUpperCase()}</div>
+                    <div className="request-details">
+                      <span className="request-name">{request.name}</span>
+                      <span className="request-email">{request.email}</span>
+                    </div>
+                  </div>
+
+                  {requestsTab === "received" && request.status === "pending" ? (
+                    <div className="request-actions">
+                      <button className="request-accept-btn">Accept</button>
+                      <button className="request-decline-btn">Decline</button>
+                    </div>
+                  ) : (
+                    <span className={`request-status request-status-${request.status}`}>
+                      {request.status}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section> */}
+        </div>
+      ) : isGlobalSearchOpen ? (
         /* ---------- GLOBAL SEARCH PAGE VIEW ---------- */
         <div className="global-search-page">
           <header className="global-search-page-header">
@@ -284,6 +379,38 @@ const Dashboard = () => {
                   </svg>
                 </span>
                 <span className="brand-word">NexaChat</span>
+
+                <div
+                  className="more-menu-wrapper"
+                  ref={moreMenuRef}
+                  onMouseEnter={() => setIsMoreMenuOpen(true)}
+                >
+                  <button
+                    className="more-menu-btn"
+                    aria-label="More options"
+                    aria-haspopup="true"
+                    aria-expanded={isMoreMenuOpen}
+                    onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+                  >
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 6a2 2 0 100-4 2 2 0 000 4zM10 12a2 2 0 100-4 2 2 0 000 4zM10 18a2 2 0 100-4 2 2 0 000 4z" />
+                    </svg>
+                  </button>
+
+                  {isMoreMenuOpen && (
+                    <div className="more-menu-dropdown">
+                      <button
+                        className="more-menu-item"
+                        onClick={handleOpenRequestFromMenu}
+                      >
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 00-6 6h12a6 6 0 00-6-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                        </svg>
+                        <span>Request</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <button
                   className="global-search-trigger"
