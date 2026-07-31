@@ -91,7 +91,7 @@ body {
   margin-bottom: 26px;
 }
 
-/* ---- global search trigger (brand row, icon-only) ---- */
+/* ---- global search trigger ---- */
 .global-search-trigger {
   display: flex;
   align-items: center;
@@ -594,6 +594,7 @@ body {
 
 /* ============ GLOBAL SEARCH PAGE ============ */
 .global-search-page {
+  grid-column: 1 / -1;
   height: 100vh;
   width: 100%;
   display: flex;
@@ -714,6 +715,108 @@ body {
 .global-search-hint {
   font-size: 12.5px;
   color: var(--ink-soft);
+}
+
+/* ============ GLOBAL SEARCH RESULTS ============ */
+.global-search-results-container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.global-search-results-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.global-search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.global-search-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.global-search-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.global-search-user-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.global-search-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.global-search-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.global-search-email {
+  font-size: 13px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.request-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--grad-brand);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.request-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.request-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+
+.request-btn:active {
+  transform: translateY(0);
 }
 
 /* ============ RESPONSIVE ============ */
