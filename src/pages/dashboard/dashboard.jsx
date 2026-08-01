@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import {
   db,
@@ -10,8 +10,9 @@ import {
   getDocs,
   collection,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
 } from "../../firebaseConfig";
+import RequestList from "./RequestList";
 
 const Dashboard = () => {
   const [messages, setMessages] = useState([]);
@@ -21,6 +22,8 @@ const Dashboard = () => {
   const [messageText, setMessageText] = useState("");
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchInputValue, setGlobalSearchInputValue] = useState("");
+  const [recivedReq, setRecivedReq] = useState([]);
+  let [showList, setShowList] = useState(false);
 
   // Controls the "3 dots" more-options menu next to the global search icon
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -38,9 +41,12 @@ const Dashboard = () => {
   const searchPrefix = globalSearchInputValue.trim().toLowerCase();
   let matchingAccounts = [];
   if (searchPrefix) {
-    matchingAccounts = contacts?.filter((contact) => {
-      return contact.email && contact.email.toLowerCase().startsWith(searchPrefix);
-    }) || [];
+    matchingAccounts =
+      contacts?.filter((contact) => {
+        return (
+          contact.email && contact.email.toLowerCase().startsWith(searchPrefix)
+        );
+      }) || [];
   } else {
     matchingAccounts = [];
   }
@@ -66,12 +72,12 @@ const Dashboard = () => {
         const sentQuery = query(
           collection(db, "messages"),
           where("from", "==", uid),
-          where("to", "==", activeChat.id)
+          where("to", "==", activeChat.id),
         );
         const receivedQuery = query(
           collection(db, "messages"),
           where("from", "==", activeChat.id),
-          where("to", "==", uid)
+          where("to", "==", uid),
         );
 
         const [sentSnap, receivedSnap] = await Promise.all([
@@ -98,6 +104,36 @@ const Dashboard = () => {
 
     getMessages();
   }, [activeChat, uid]);
+
+  // get requests
+
+  const receivedRequests = async () => {
+    try {
+      const q = query(collection(db, "requests"), where("from", "==", uid));
+      const querySnapshot = await getDocs(q);
+      let list = [];
+      let uniqueRequest = false;
+
+      (await querySnapshot.empty)
+        ? console.error(new Error("kisi nay apko request send nahi ke"))
+        : querySnapshot.forEach((reqRecived) => {
+            for (let index = 0; index < recivedReq.length; index++) {
+              uniqueRequest = recivedReq[index].from == reqRecived.data().from;
+            }
+
+            if (uniqueRequest) {
+              return reqRecived;
+            } else {
+              list.push(...recivedReq, { ...reqRecived.data() });
+              return setRecivedReq(list);
+            }
+          });
+    } catch (error) {
+      console.error(error);
+    }
+
+    setShowList(true);
+  };
 
   // Fetch contact users list
   useEffect(() => {
@@ -153,7 +189,7 @@ const Dashboard = () => {
         text: messageText,
         to: activeChat.id,
         from: uid,
-        Time: serverTimestamp()
+        Time: serverTimestamp(),
       });
       console.log("Document written with ID: ", docRef.id);
       setMessageText("");
@@ -162,20 +198,20 @@ const Dashboard = () => {
     }
   };
 
-  //working on requesting 
+  //working on requesting
   const handleSendRequest = async (account) => {
     if (!account || !uid) return;
 
     try {
       const requestData = {
-        from: uid,             
-        to: account.id,          
-        status: "pending",       
-        createdAt: serverTimestamp() 
+        from: uid,
+        to: account.id,
+        status: "pending",
+        createdAt: serverTimestamp(),
       };
       // Store in Firestore collection named 'requests'
       const docRef = await addDoc(collection(db, "requests"), requestData);
-      console.log("Request created with ID:", docRef.id)
+      console.log("Request created with ID:", docRef.id);
       alert(`your request to ${account.username} sended successfully`);
     } catch (error) {
       console.error("Error sending request:", error);
@@ -202,11 +238,12 @@ const Dashboard = () => {
               </svg>
             </button>
             <h1 className="requests-page-title">Requests</h1>
-
             <div className="requests-tabs">
               <button
                 className={`requests-tab ${requestsTab === "received" ? "requests-tab-active" : ""}`}
-                onClick={() => setRequestsTab("received")}
+                onClick={() => {
+                  (setRequestsTab("received"), receivedRequests());
+                }}
               >
                 Received
               </button>
@@ -219,32 +256,12 @@ const Dashboard = () => {
             </div>
           </header>
 
-          {/* <section className="requests-page-body">
-            <div className="requests-list">
-              {(requestsTab === "received" ? receivedRequests : sentRequests).map((request) => (
-                <div key={request.id} className="request-card">
-                  <div className="request-user-info">
-                    <div className="avatar">{request.name.charAt(0).toUpperCase()}</div>
-                    <div className="request-details">
-                      <span className="request-name">{request.name}</span>
-                      <span className="request-email">{request.email}</span>
-                    </div>
-                  </div>
 
-                  {requestsTab === "received" && request.status === "pending" ? (
-                    <div className="request-actions">
-                      <button className="request-accept-btn">Accept</button>
-                      <button className="request-decline-btn">Decline</button>
-                    </div>
-                  ) : (
-                    <span className={`request-status request-status-${request.status}`}>
-                      {request.status}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section> */}
+          {/* list of request */}
+
+          {showList && (
+            <RequestList request={recivedReq || []} requestsTab={requestsTab} />
+          )}
         </div>
       ) : isGlobalSearchOpen ? (
         /* ---------- GLOBAL SEARCH PAGE VIEW ---------- */
@@ -268,7 +285,11 @@ const Dashboard = () => {
             </button>
 
             <div className="global-search-page-field">
-              <svg className="global-search-field-icon" viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                className="global-search-field-icon"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path
                   fillRule="evenodd"
                   d="M9 3a6 6 0 104.47 10.03l3.75 3.75a1 1 0 001.41-1.41l-3.75-3.75A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
@@ -322,20 +343,27 @@ const Dashboard = () => {
             ) : (
               <div className="global-search-results-container">
                 <div className="global-search-results-header">
-                  <span>Found {matchingAccounts.length} matching account{matchingAccounts.length > 1 ? "s" : ""}</span>
+                  <span>
+                    Found {matchingAccounts.length} matching account
+                    {matchingAccounts.length > 1 ? "s" : ""}
+                  </span>
                 </div>
                 <div className="global-search-results-list">
                   {matchingAccounts.map((account) => (
                     <div key={account.id} className="global-search-card">
                       <div className="global-search-user-info">
                         <div className="avatar">
-                          {(account.name || account.email || "?").charAt(0).toUpperCase()}
+                          {(account.name || account.email || "?")
+                            .charAt(0)
+                            .toUpperCase()}
                         </div>
                         <div className="global-search-details">
                           <span className="global-search-name">
                             {account.username || "NexaChat User"}
                           </span>
-                          <span className="global-search-email">{account.email}</span>
+                          <span className="global-search-email">
+                            {account.email}
+                          </span>
                         </div>
                       </div>
                       <button
@@ -371,7 +399,13 @@ const Dashboard = () => {
                       fill="url(#brandGradDash)"
                     />
                     <defs>
-                      <linearGradient id="brandGradDash" x1="4" y1="4" x2="20" y2="20">
+                      <linearGradient
+                        id="brandGradDash"
+                        x1="4"
+                        y1="4"
+                        x2="20"
+                        y2="20"
+                      >
                         <stop offset="0%" stopColor="#6366F1" />
                         <stop offset="100%" stopColor="#22D3EE" />
                       </linearGradient>
@@ -428,7 +462,11 @@ const Dashboard = () => {
               </div>
 
               <div className="search-shell">
-                <svg className="search-icon" viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  className="search-icon"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path
                     fillRule="evenodd"
                     d="M9 3a6 6 0 104.47 10.03l3.75 3.75a1 1 0 001.41-1.41l-3.75-3.75A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
@@ -464,7 +502,9 @@ const Dashboard = () => {
                       </div>
                       <div className="chat-item-body">
                         <div className="chat-item-top">
-                          <span className="chat-item-name">{c.name || c.email}</span>
+                          <span className="chat-item-name">
+                            {c.name || c.email}
+                          </span>
                         </div>
                         {c.name && c.email && (
                           <div className="chat-item-bottom">
@@ -510,10 +550,14 @@ const Dashboard = () => {
                 <header className="chat-header">
                   <div className="chat-header-left">
                     <div className="avatar">
-                      {(activeChat.name || activeChat.email || "?").charAt(0).toUpperCase()}
+                      {(activeChat.name || activeChat.email || "?")
+                        .charAt(0)
+                        .toUpperCase()}
                     </div>
                     <div>
-                      <div className="chat-header-name">{activeChat.name || activeChat.email}</div>
+                      <div className="chat-header-name">
+                        {activeChat.name || activeChat.email}
+                      </div>
                     </div>
                   </div>
                   <div className="chat-header-actions">
@@ -550,7 +594,9 @@ const Dashboard = () => {
                         key={m.id}
                         className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
                       >
-                        <div className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}>
+                        <div
+                          className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}
+                        >
                           {m.text}
                           <span className="message-time">{m.time}</span>
                         </div>
@@ -571,7 +617,9 @@ const Dashboard = () => {
                       placeholder="Type a message..."
                       value={messageText}
                       onChange={(e) => setMessageText(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleSendMessage()
+                      }
                     />
                   </div>
                   <button
