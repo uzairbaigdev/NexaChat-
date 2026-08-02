@@ -1,6 +1,10 @@
 import React from "react";
 
-const RequestList = ({ request, requestsTab }) => {
+const RequestList = ({
+  request,
+  requestsTab,
+  handleAccept,
+}) => {
   return (
     <>
       <section className="requests-page-body">
@@ -24,7 +28,12 @@ const RequestList = ({ request, requestsTab }) => {
                   {requestsTab === "received" &&
                   request.status === "pending" ? (
                     <div className="request-actions">
-                      <button className="request-accept-btn">Accept</button>
+                     <button
+  className="request-accept-btn"
+  onClick={() => handleAccept(request)}
+>
+  Accept
+</button>
                       <button className="request-decline-btn">Decline</button>
                     </div>
                   ) : (

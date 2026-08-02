@@ -11,6 +11,9 @@ import {
   collection,
   addDoc,
   serverTimestamp,
+  getDoc,
+   doc,
+   updateDoc
 } from "../../firebaseConfig";
 import RequestList from "./RequestList";
 
@@ -108,33 +111,47 @@ const Dashboard = () => {
   // get requests
 
   const receivedRequests = async () => {
-    try {
-      const q = query(collection(db, "requests"), where("from", "==", uid));
-      const querySnapshot = await getDocs(q);
-      let list = [];
-      let uniqueRequest = false;
+  try {
+    const q = query(
+      collection(db, "requests"),
+      where("to", "==", uid)
+    );
 
-      (await querySnapshot.empty)
-        ? console.error(new Error("kisi nay apko request send nahi ke"))
-        : querySnapshot.forEach((reqRecived) => {
-            for (let index = 0; index < recivedReq.length; index++) {
-              uniqueRequest = recivedReq[index].from == reqRecived.data().from;
-            }
+    const querySnapshot = await getDocs(q);
 
-            if (uniqueRequest) {
-              return reqRecived;
-            } else {
-              list.push(...recivedReq, { ...reqRecived.data() });
-              return setRecivedReq(list);
-            }
+    let list = [];
+
+    if (querySnapshot.empty) {
+      console.log("Kisi ne request send nahi ki");
+      setRecivedReq([]);
+    } else {
+      for (const requestDoc of querySnapshot.docs) {
+        const requestData = requestDoc.data();
+
+        // Sender ka data lao
+        const userRef = doc(db, "users", requestData.from);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+
+          list.push({
+            id: requestDoc.id,
+            ...requestData,
+            name: userData.username,
+            email: userData.email,
           });
-    } catch (error) {
-      console.error(error);
+        }
+      }
+
+      setRecivedReq(list);
     }
+  } catch (error) {
+    console.error(error);
+  }
 
-    setShowList(true);
-  };
-
+  setShowList(true);
+};
   // Fetch contact users list
   useEffect(() => {
     const getContact = async () => {
@@ -199,24 +216,66 @@ const Dashboard = () => {
   };
 
   //working on requesting
-  const handleSendRequest = async (account) => {
-    if (!account || !uid) return;
+ const handleSendRequest = async (account) => {
+  if (!account || !uid) return;
 
-    try {
-      const requestData = {
-        from: uid,
-        to: account.id,
-        status: "pending",
-        createdAt: serverTimestamp(),
-      };
-      // Store in Firestore collection named 'requests'
-      const docRef = await addDoc(collection(db, "requests"), requestData);
-      console.log("Request created with ID:", docRef.id);
-      alert(`your request to ${account.username} sended successfully`);
-    } catch (error) {
-      console.error("Error sending request:", error);
+  try {
+    // Current logged-in user ka data
+    const currentUserRef = doc(db, "users", uid);
+    const currentUserSnap = await getDoc(currentUserRef);
+
+    if (!currentUserSnap.exists()) {
+      alert("Current user data not found!");
+      return;
     }
-  };
+
+    const currentUser = currentUserSnap.data();
+
+    const requestData = {
+      // Sender
+      from: uid,
+      fromName: currentUser.username,
+      fromEmail: currentUser.email,
+
+      // Receiver
+      to: account.id,
+      toName: account.username,
+      toEmail: account.email,
+
+      // Request Info
+      status: "pending",
+      createdAt: serverTimestamp(),
+    };
+
+    const docRef = await addDoc(collection(db, "requests"), requestData);
+
+    console.log("Request created with ID:", docRef.id);
+    alert(`Your request has been sent to ${account.username}`);
+  } catch (error) {
+    console.error("Error sending request:", error);
+  }
+};
+
+  ///accept request work ///
+
+  const handleAccept = async (request) => {
+  try {
+    const requestRef = doc(db, "requests", request.id);
+
+    await updateDoc(requestRef, {
+      status: "accepted",
+    });
+
+    console.log("Request Accepted");
+
+    // request again refresh
+    receivedRequests();
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 
   return (
     <div className="dashboard">
@@ -260,7 +319,11 @@ const Dashboard = () => {
           {/* list of request */}
 
           {showList && (
-            <RequestList request={recivedReq || []} requestsTab={requestsTab} />
+            <RequestList
+  request={recivedReq || []}
+  requestsTab={requestsTab}
+  handleAccept={handleAccept}
+/>
           )}
         </div>
       ) : isGlobalSearchOpen ? (
