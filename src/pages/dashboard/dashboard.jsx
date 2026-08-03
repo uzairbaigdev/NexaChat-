@@ -13,7 +13,9 @@ import {
   serverTimestamp,
   getDoc,
    doc,
-   updateDoc
+   updateDoc,
+   or,
+   and
 } from "../../firebaseConfig";
 import RequestList from "./RequestList";
 
@@ -114,7 +116,7 @@ const Dashboard = () => {
   try {
     const q = query(
       collection(db, "requests"),
-      where("to", "==", uid)
+      where("from", "==", uid)
     );
 
     const querySnapshot = await getDocs(q);
@@ -125,6 +127,7 @@ const Dashboard = () => {
       console.log("Kisi ne request send nahi ki");
       setRecivedReq([]);
     } else {
+      console.log(querySnapshot)
       for (const requestDoc of querySnapshot.docs) {
         const requestData = requestDoc.data();
 
@@ -152,17 +155,62 @@ const Dashboard = () => {
 
   setShowList(true);
 };
-  // Fetch contact users list
+ 
+
+
+
+
+
+
+
+
+
+// Fetch contact users list
   useEffect(() => {
+  
     const getContact = async () => {
       try {
-        const q = query(collection(db, "users"), where("UID", "!=", uid));
-        const querySnapshot = await getDocs(q);
-        const list = [];
-        querySnapshot.forEach((doc) => {
-          list.push({ id: doc.id, ...doc.data() });
-        });
-        setContacts(list);
+        const q = query(collection(db, "requests"),
+        and(
+
+          or(
+            
+            where("from", "==", uid),
+            where('to','==', uid),
+          ),
+          where('status','in' ,["accepted","pending"])          
+        )
+      );
+
+      const querySnapshot = await getDocs(q);
+    
+      const list = [];            
+      if (querySnapshot.empty) {
+          alert('no data')
+        }else{
+
+         
+       const userPromises = querySnapshot.docs.map(async(doc) => {
+        let userDoc = doc.data()
+        
+
+
+         const targetId = userDoc.from == uid ? userDoc.to : userDoc.from
+
+
+             const getUser = query(collection(db , 'users') ,
+             where('UID', '==' , targetId)
+              )
+
+              let userData = await getDocs(getUser)
+
+              userData.forEach((userDetails)=>{
+                list.push({ id: userDetails.id, ...userDetails.data() });
+              })
+          });
+          let resolvePromise = await Promise.all(userPromises)
+          setContacts(list);
+        }
       } catch (error) {
         console.error("Error fetching contacts:", error);
       }
@@ -548,17 +596,19 @@ const Dashboard = () => {
                           fillRule="evenodd"
                           d="M2 5.5A2.5 2.5 0 014.5 3h11A2.5 2.5 0 0118 5.5v6A2.5 2.5 0 0115.5 14H9l-4 3.5V14H4.5A2.5 2.5 0 012 11.5v-6z"
                           clipRule="evenodd"
-                        />
+                          />
                       </svg>
                     </div>
                     <p>No conversations yet</p>
                   </div>
                 ) : (
+                  
+        
                   contacts.map((c) => (
                     <button
-                      key={c.id}
-                      className={`chat-item ${c.id === activeId ? "chat-item-active" : ""}`}
-                      onClick={() => setActiveId(c.id)}
+                    key={c.id}
+                    className={`chat-item ${c.id === activeId ? "chat-item-active" : ""}`}
+                    onClick={() => setActiveId(c.id)}
                     >
                       <div className="avatar">
                         {(c.name || c.email || "?").charAt(0).toUpperCase()}
