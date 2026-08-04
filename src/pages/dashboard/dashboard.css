@@ -1109,8 +1109,25 @@ body {
     grid-template-columns: 1fr;
   }
 
+  /* Mobile default: show the left navigation (contacts list) first */
   .chatlist-panel {
+    display: flex;
+    width: 100%;
+  }
+
+  .chat-panel {
     display: none;
+  }
+
+  /* Once a contact is selected, .chat-header renders inside .chat-panel —
+     use that as the signal to flip to the chat view on mobile */
+  .dashboard:has(.chat-header) .chatlist-panel {
+    display: none;
+  }
+
+  .dashboard:has(.chat-header) .chat-panel {
+    display: flex;
+    width: 100%;
   }
 }
 

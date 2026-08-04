@@ -26,14 +26,14 @@ const RequestList = ({
                   </div>
 
                   {requestsTab === "received" &&
-                  request.status === "pending" ? (
+                    request.status === "pending" ? (
                     <div className="request-actions">
-                     <button
-  className="request-accept-btn"
-  onClick={() => handleAccept(request)}
->
-  Accept
-</button>
+                      <button
+                        className="request-accept-btn"
+                        onClick={() => handleAccept(request)}
+                      >
+                        Accept
+                      </button>
                       <button className="request-decline-btn">Decline</button>
                     </div>
                   ) : (

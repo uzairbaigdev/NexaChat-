@@ -2,20 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { data, useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import {
-  db,
-  auth,
-  onAuthStateChanged,
-  query,
-  where,
-  getDocs,
-  collection,
-  addDoc,
-  serverTimestamp,
-  getDoc,
-   doc,
-   updateDoc,
-   or,
-   and
+  db, auth, onAuthStateChanged, query, where, getDocs, collection, addDoc, serverTimestamp,
+  getDoc, doc, updateDoc, onSnapshot
 } from "../../firebaseConfig";
 import RequestList from "./RequestList";
 
@@ -24,10 +12,14 @@ const Dashboard = () => {
   const [activeId, setActiveId] = useState(null);
   const [userEmail, setUserEmail] = useState("");
   const [contacts, setContacts] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchInputValue, setGlobalSearchInputValue] = useState("");
   const [recivedReq, setRecivedReq] = useState([]);
+  const [matchingAccounts, setMatchingAccounts] = useState([]);
+  const [searchContacts, setSearchContacts] = useState("");
+  let searchPrefix = globalSearchInputValue.trim().toLowerCase();
   let [showList, setShowList] = useState(false);
 
   // Controls the "3 dots" more-options menu next to the global search icon
@@ -37,24 +29,37 @@ const Dashboard = () => {
   // Controls the standalone "Requests" page opened from the "3 dots" menu
   const [isRequestsPageOpen, setIsRequestsPageOpen] = useState(false);
   const [requestsTab, setRequestsTab] = useState("received"); // "received" | "sent"
+  const uid = window.localStorage.getItem("uid");
+  const navigate = useNavigate();
 
   const activeChat = contacts.find((c) => c.id === activeId) || null;
-  const navigate = useNavigate();
-  const uid = window.localStorage.getItem("uid");
+  // Filters the sidebar contacts list locally as the user types in "Search conversations"
+  const fetchContactsLocally = () => {
+    const search = searchContacts.trim().toLowerCase();
+    if (!search) return contacts;
 
-  // Derive matching accounts starting with the entered search term
-  const searchPrefix = globalSearchInputValue.trim().toLowerCase();
-  let matchingAccounts = [];
-  if (searchPrefix) {
-    matchingAccounts =
-      contacts?.filter((contact) => {
-        return (
-          contact.email && contact.email.toLowerCase().startsWith(searchPrefix)
-        );
-      }) || [];
-  } else {
-    matchingAccounts = [];
-  }
+    return contacts.filter((c) =>
+      (c.name || "").toLowerCase().includes(search) ||
+      (c.email || "").toLowerCase().includes(search)
+    );
+  };
+
+  //working on global search filtering accounts 
+  useEffect(() => {
+    const search = globalSearchInputValue.trim().toLowerCase();
+
+    if (!search) {
+      setMatchingAccounts([]);
+      return;
+    }
+
+    const filtered = allUsers.filter((user) =>
+      user.email?.toLowerCase().startsWith(search)
+    );
+
+    setMatchingAccounts(filtered);
+  }, [globalSearchInputValue, allUsers]);
+
 
   // Check user auth state
   useEffect(() => {
@@ -68,156 +73,167 @@ const Dashboard = () => {
     return () => unsubscribe();
   }, [navigate]);
 
-  // Fetch messages for active chat
+  // Listen for messages in the active chat in real time
   useEffect(() => {
     if (!activeChat) return;
 
-    const getMessages = async () => {
-      try {
-        const sentQuery = query(
-          collection(db, "messages"),
-          where("from", "==", uid),
-          where("to", "==", activeChat.id),
-        );
-        const receivedQuery = query(
-          collection(db, "messages"),
-          where("from", "==", activeChat.id),
-          where("to", "==", uid),
-        );
+    const sentQuery = query(
+      collection(db, "messages"),
+      where("from", "==", uid),
+      where("to", "==", activeChat.id),
+    );
+    const receivedQuery = query(
+      collection(db, "messages"),
+      where("from", "==", activeChat.id),
+      where("to", "==", uid),
+    );
 
-        const [sentSnap, receivedSnap] = await Promise.all([
-          getDocs(sentQuery),
-          getDocs(receivedQuery),
-        ]);
+    let sentMessages = [];
+    let receivedMessages = [];
 
-        const list = [];
-        sentSnap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
-        receivedSnap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+    const mergeAndSetMessages = () => {
+      const list = [...sentMessages, ...receivedMessages];
 
-        // Sort messages chronologically
-        list.sort((a, b) => {
-          const aTime = a.Time?.toMillis ? a.Time.toMillis() : 0;
-          const bTime = b.Time?.toMillis ? b.Time.toMillis() : 0;
-          return aTime - bTime;
-        });
+      // Sort messages chronologically
+      list.sort((a, b) => {
+        const aTime = a.Time?.toMillis ? a.Time.toMillis() : 0;
+        const bTime = b.Time?.toMillis ? b.Time.toMillis() : 0;
+        return aTime - bTime;
+      });
 
-        setMessages(list);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      }
+      setMessages(list);
     };
 
-    getMessages();
+    const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
+      sentMessages = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      mergeAndSetMessages();
+    }, (error) => {
+      console.error("Error listening to sent messages:", error);
+    });
+
+    const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
+      receivedMessages = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      mergeAndSetMessages();
+    }, (error) => {
+      console.error("Error listening to received messages:", error);
+    });
+
+    return () => {
+      unsubscribeSent();
+      unsubscribeReceived();
+    };
   }, [activeChat, uid]);
 
   // get requests
 
   const receivedRequests = async () => {
-  try {
-    const q = query(
-      collection(db, "requests"),
-      where("from", "==", uid)
-    );
-
-    const querySnapshot = await getDocs(q);
-
-    let list = [];
-
-    if (querySnapshot.empty) {
-      console.log("Kisi ne request send nahi ki");
-      setRecivedReq([]);
-    } else {
-      console.log(querySnapshot)
-      for (const requestDoc of querySnapshot.docs) {
-        const requestData = requestDoc.data();
-
-        // Sender ka data lao
-        const userRef = doc(db, "users", requestData.from);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-
-          list.push({
-            id: requestDoc.id,
-            ...requestData,
-            name: userData.username,
-            email: userData.email,
-          });
-        }
-      }
-
-      setRecivedReq(list);
-    }
-  } catch (error) {
-    console.error(error);
-  }
-
-  setShowList(true);
-};
- 
-
-
-
-
-
-
-
-
-
-// Fetch contact users list
-  useEffect(() => {
-  
-    const getContact = async () => {
-      try {
-        const q = query(collection(db, "requests"),
-        and(
-
-          or(
-            
-            where("from", "==", uid),
-            where('to','==', uid),
-          ),
-          where('status','in' ,["accepted","pending"])          
-        )
+    try {
+      const q = query(
+        collection(db, "requests"),
+        where("to", "==", uid),
+        where("status", "==", "pending")
       );
 
       const querySnapshot = await getDocs(q);
-    
-      const list = [];            
+
+      let list = [];
+
       if (querySnapshot.empty) {
-          alert('no data')
-        }else{
+        console.log("no one has send request");
+        setRecivedReq([]);
+      } else {
+        console.log(querySnapshot)
+        for (const requestDoc of querySnapshot.docs) {
+          const requestData = requestDoc.data();
 
-         
-       const userPromises = querySnapshot.docs.map(async(doc) => {
-        let userDoc = doc.data()
-        
+          //get sender data
+          const userRef = doc(db, "users", requestData.from);
+          const userSnap = await getDoc(userRef);
 
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
 
-         const targetId = userDoc.from == uid ? userDoc.to : userDoc.from
-
-
-             const getUser = query(collection(db , 'users') ,
-             where('UID', '==' , targetId)
-              )
-
-              let userData = await getDocs(getUser)
-
-              userData.forEach((userDetails)=>{
-                list.push({ id: userDetails.id, ...userDetails.data() });
-              })
-          });
-          let resolvePromise = await Promise.all(userPromises)
-          setContacts(list);
+            list.push({
+              id: requestDoc.id,
+              ...requestData,
+              name: userData.username,
+              email: userData.email,
+            });
+          }
         }
-      } catch (error) {
-        console.error("Error fetching contacts:", error);
-      }
-    };
 
+        setRecivedReq(list);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    setShowList(true);
+  };
+
+  // Fetch sidebar contact list — only users whose request is accepted
+  const getAcceptedContacts = async () => {
+    try {
+      const sentQuery = query(
+        collection(db, "requests"),
+        where("from", "==", uid),
+        where("status", "==", "accepted")
+      );
+      const receivedQuery = query(
+        collection(db, "requests"),
+        where("to", "==", uid),
+        where("status", "==", "accepted")
+      );
+
+      const [sentSnap, receivedSnap] = await Promise.all([
+        getDocs(sentQuery),
+        getDocs(receivedQuery),
+      ]);
+
+      const requestDocs = [...sentSnap.docs, ...receivedSnap.docs];
+
+      if (requestDocs.length === 0) {
+        setContacts([]);
+        return;
+      }
+
+      const users = [];
+
+      await Promise.all(
+        requestDocs.map(async (requestDoc) => {
+          const requestData = requestDoc.data();
+
+          // Find the other user in the conversation
+          const targetUID =
+            requestData.from === uid
+              ? requestData.to
+              : requestData.from;
+
+          // Look up the other user directly by their document ID
+          const userRef = doc(db, "users", targetUID);
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
+            // Prevent duplicate contacts
+            if (!users.some((u) => u.id === userSnap.id)) {
+              users.push({
+                id: userSnap.id,
+                ...userSnap.data(),
+              });
+            }
+          }
+        })
+      );
+
+      setContacts(users);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
+  };
+
+  useEffect(() => {
     if (uid) {
-      getContact();
+      getAcceptedContacts();
     }
   }, [uid]);
 
@@ -264,65 +280,68 @@ const Dashboard = () => {
   };
 
   //working on requesting
- const handleSendRequest = async (account) => {
-  if (!account || !uid) return;
+  const handleSendRequest = async (account) => {
+    if (!account || !uid) return;
 
-  try {
-    // Current logged-in user ka data
-    const currentUserRef = doc(db, "users", uid);
-    const currentUserSnap = await getDoc(currentUserRef);
+    try {
+      // Current logged-in user ka data
+      const currentUserRef = doc(db, "users", uid);
+      const currentUserSnap = await getDoc(currentUserRef);
 
-    if (!currentUserSnap.exists()) {
-      alert("Current user data not found!");
-      return;
+      if (!currentUserSnap.exists()) {
+        alert("Current user data not found!");
+        return;
+      }
+
+      const currentUser = currentUserSnap.data();
+
+      const requestData = {
+        // Sender
+        from: uid,
+        fromName: currentUser.username,
+        fromEmail: currentUser.email,
+
+        // Receiver
+        to: account.id,
+        toName: account.username,
+        toEmail: account.email,
+
+        // Request Info
+        status: "pending",
+        createdAt: serverTimestamp(),
+      };
+
+      const docRef = await addDoc(collection(db, "requests"), requestData);
+
+      console.log("Request created with ID:", docRef.id);
+      alert(`Your request has been sent to ${account.username}`);
+    } catch (error) {
+      console.error("Error sending request:", error);
     }
-
-    const currentUser = currentUserSnap.data();
-
-    const requestData = {
-      // Sender
-      from: uid,
-      fromName: currentUser.username,
-      fromEmail: currentUser.email,
-
-      // Receiver
-      to: account.id,
-      toName: account.username,
-      toEmail: account.email,
-
-      // Request Info
-      status: "pending",
-      createdAt: serverTimestamp(),
-    };
-
-    const docRef = await addDoc(collection(db, "requests"), requestData);
-
-    console.log("Request created with ID:", docRef.id);
-    alert(`Your request has been sent to ${account.username}`);
-  } catch (error) {
-    console.error("Error sending request:", error);
-  }
-};
+  };
 
   ///accept request work ///
 
   const handleAccept = async (request) => {
-  try {
-    const requestRef = doc(db, "requests", request.id);
+    try {
+      const requestRef = doc(db, "requests", request.id);
 
-    await updateDoc(requestRef, {
-      status: "accepted",
-    });
+      await updateDoc(requestRef, {
+        status: "accepted",
+      });
 
-    console.log("Request Accepted");
+      console.log("Request Accepted");
 
-    // request again refresh
-    receivedRequests();
+      // refresh received requests list
+      receivedRequests();
 
-  } catch (error) {
-    console.error(error);
-  }
-};
+      // refresh sidebar contacts so the newly accepted user shows up
+      getAcceptedContacts();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
 
   return (
@@ -368,10 +387,10 @@ const Dashboard = () => {
 
           {showList && (
             <RequestList
-  request={recivedReq || []}
-  requestsTab={requestsTab}
-  handleAccept={handleAccept}
-/>
+              request={recivedReq || []}
+              requestsTab={requestsTab}
+              handleAccept={handleAccept}
+            />
           )}
         </div>
       ) : isGlobalSearchOpen ? (
@@ -584,7 +603,10 @@ const Dashboard = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <input type="text" placeholder="Search conversations" />
+                <input type="text" placeholder="Search conversations"
+                  value={searchContacts}
+                  onChange={(e) => setSearchContacts(e.target.value)}
+                />
               </div>
 
               <div className="chat-list">
@@ -596,19 +618,32 @@ const Dashboard = () => {
                           fillRule="evenodd"
                           d="M2 5.5A2.5 2.5 0 014.5 3h11A2.5 2.5 0 0118 5.5v6A2.5 2.5 0 0115.5 14H9l-4 3.5V14H4.5A2.5 2.5 0 012 11.5v-6z"
                           clipRule="evenodd"
-                          />
+                        />
                       </svg>
                     </div>
                     <p>No conversations yet</p>
                   </div>
+                ) : fetchContactsLocally().length === 0 ? (
+                  <div className="list-empty-state">
+                    <div className="empty-icon">
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M9 3a6 6 0 104.47 10.03l3.75 3.75a1 1 0 001.41-1.41l-3.75-3.75A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <p>No contacts matching "{searchContacts}"</p>
+                  </div>
                 ) : (
-                  
-        
-                  contacts.map((c) => (
+
+
+                  fetchContactsLocally().map((c) => (
                     <button
-                    key={c.id}
-                    className={`chat-item ${c.id === activeId ? "chat-item-active" : ""}`}
-                    onClick={() => setActiveId(c.id)}
+                      key={c.id}
+                      className={`chat-item ${c.id === activeId ? "chat-item-active" : ""}`}
+                      onClick={() => setActiveId(c.id)}
                     >
                       <div className="avatar">
                         {(c.name || c.email || "?").charAt(0).toUpperCase()}
