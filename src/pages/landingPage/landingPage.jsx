@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect } from "react";
 import "./landingPage.css";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {auth,onAuthStateChanged} from "../../firebaseConfig"
 
 const LandingPage = () => {
@@ -23,7 +23,7 @@ const navigate = useNavigate();
       {/* ================= NAVBAR ================= */}
       <header className="nav">
         <div className="nav-inner">
-          <a className="nav-brand" href="/">
+          <Link className="nav-brand" to="/">
             <span className="brand-icon">
               <svg viewBox="0 0 24 24" fill="none">
                 <path
@@ -39,7 +39,7 @@ const navigate = useNavigate();
               </svg>
             </span>
             <span className="brand-word">NexaChat</span>
-          </a>
+          </Link>
 
           <nav className="nav-links">
             <a href="#features">Features</a>
@@ -48,12 +48,12 @@ const navigate = useNavigate();
           </nav>
 
           <div className="nav-actions">
-            <a className="nav-login" href="/login">
+            <Link className="nav-login" to="/login">
               Log in
-            </a>
-            <a className="nav-cta" href="/signup">
+            </Link>
+            <Link className="nav-cta" to="/signup">
               Get started
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -110,9 +110,9 @@ const navigate = useNavigate();
           </p>
 
           <div className="hero-actions">
-            <a className="btn btn-primary" href="/signup">
+            <Link className="btn btn-primary" to="/signup">
               Get started free
-            </a>
+            </Link>
             <a className="btn btn-ghost" href="#features">
               See how it works
             </a>
@@ -272,15 +272,15 @@ const navigate = useNavigate();
         <div className="glow glow-d"></div>
         <h2 className="cta-title">Ready to talk to the world?</h2>
         <p className="cta-sub">Create your account in under a minute. No card required.</p>
-        <a className="btn btn-primary btn-large" href="/signup">
+        <Link className="btn btn-primary btn-large" to="/signup">
           Get started free
-        </a>
+        </Link>
       </section>
 
       {/* ================= FOOTER ================= */}
       <footer className="footer">
         <div className="footer-top">
-          <a className="nav-brand" href="/">
+          <Link className="nav-brand" to="/">
             <span className="brand-icon brand-icon-sm">
               <svg viewBox="0 0 24 24" fill="none">
                 <path
@@ -296,7 +296,7 @@ const navigate = useNavigate();
               </svg>
             </span>
             <span className="brand-word">NexaChat</span>
-          </a>
+          </Link>
 
           <div className="footer-links">
             <div className="footer-col">

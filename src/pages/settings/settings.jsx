@@ -1,7 +1,7 @@
 import React, { useState,useEffect } from "react";
 import "./settings.css";
 import { signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { auth,onAuthStateChanged } from "../../firebaseConfig.js";
 
 const Settings = () => {
@@ -31,7 +31,7 @@ const Settings = () => {
     <div className="settings-page">
       {/* ---------- Top bar ---------- */}
       <header className="settings-topbar">
-        <a href="/dashboard" className="back-link">
+        <Link to="/dashboard" className="back-link">
           <svg viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
@@ -40,7 +40,7 @@ const Settings = () => {
             />
           </svg>
           Back to chats
-        </a>
+        </Link>
 
         <div className="brand-row">
           <span className="brand-icon">
