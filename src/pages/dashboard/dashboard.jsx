@@ -26,6 +26,10 @@ const Dashboard = () => {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const moreMenuRef = useRef(null);
 
+  // Cloudinary image upload (messages section)
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef(null);
+
   // Controls the standalone "Requests" page opened from the "3 dots" menu
   const [isRequestsPageOpen, setIsRequestsPageOpen] = useState(false);
   const [requestsTab, setRequestsTab] = useState("received"); // "received" | "sent"
@@ -276,6 +280,61 @@ const Dashboard = () => {
       setMessageText("");
     } catch (error) {
       console.error("Error sending message:", error);
+    }
+  };
+
+  // Uploads a single file to Cloudinary (unsigned preset) and returns its hosted URL
+  const uploadImageToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append(
+      "upload_preset",
+      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+    );
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: "POST", body: formData }
+    );
+
+    if (!res.ok) {
+      throw new Error("Cloudinary upload failed");
+    }
+
+    const data = await res.json();
+    return data.secure_url;
+  };
+
+  // Fired when a file is chosen from the hidden <input type="file"> in the composer
+  const handleImageSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // reset so picking the same file twice in a row still fires onChange
+    if (!file || !activeChat) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Image must be smaller than 10MB.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+
+      await addDoc(collection(db, "messages"), {
+        imageUrl,
+        to: activeChat.id,
+        from: uid,
+        Time: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error sending image:", error);
+      alert("Failed to send image. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -743,9 +802,17 @@ const Dashboard = () => {
                         className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
                       >
                         <div
-                          className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}
+                          className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"} ${m.imageUrl ? "bubble-image" : ""}`}
                         >
-                          {m.text}
+                          {m.imageUrl ? (
+                            <img
+                              src={m.imageUrl}
+                              alt="Attachment"
+                              className="message-image"
+                            />
+                          ) : (
+                            m.text
+                          )}
                           <span className="message-time">{m.time}</span>
                         </div>
                       </div>
@@ -754,15 +821,31 @@ const Dashboard = () => {
                 </section>
 
                 <footer className="composer">
-                  <button className="icon-btn" aria-label="Attach file">
+                  <button
+                    className="icon-btn"
+                    aria-label="Attach file"
+                    disabled={isUploadingImage}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <svg viewBox="0 0 20 20" fill="currentColor">
                       <path d="M14.5 6.5l-6.36 6.36a2 2 0 102.83 2.83l6.01-6.01a3.5 3.5 0 10-4.95-4.95L5.5 11.26a5 5 0 007.07 7.07l6.01-6.01" />
                     </svg>
                   </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleImageSelected}
+                    style={{ display: "none" }}
+                  />
                   <div className="composer-input-shell">
                     <input
                       type="text"
-                      placeholder="Type a message..."
+                      placeholder={
+                        isUploadingImage
+                          ? "Sending image..."
+                          : "Type a message..."
+                      }
                       value={messageText}
                       onChange={(e) => setMessageText(e.target.value)}
                       onKeyDown={(e) =>
