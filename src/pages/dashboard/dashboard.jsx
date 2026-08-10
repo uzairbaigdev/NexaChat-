@@ -14,6 +14,9 @@ const Dashboard = () => {
   const [contacts, setContacts] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [messageText, setMessageText] = useState("");
+  // Image message upload (base64, same approach as chat.js) state
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef(null);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchInputValue, setGlobalSearchInputValue] = useState("");
   const [recivedReq, setRecivedReq] = useState([]);
@@ -25,10 +28,6 @@ const Dashboard = () => {
   // Controls the "3 dots" more-options menu next to the global search icon
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const moreMenuRef = useRef(null);
-
-  // Cloudinary image upload (messages section)
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const fileInputRef = useRef(null);
 
   // Controls the standalone "Requests" page opened from the "3 dots" menu
   const [isRequestsPageOpen, setIsRequestsPageOpen] = useState(false);
@@ -283,56 +282,100 @@ const Dashboard = () => {
     }
   };
 
-  // Uploads a single file to Cloudinary (unsigned preset) and returns its hosted URL
-  const uploadImageToCloudinary = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append(
-      "upload_preset",
-      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
-    );
-
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
-      { method: "POST", body: formData }
-    );
-
-    if (!res.ok) {
-      throw new Error("Cloudinary upload failed");
-    }
-
-    const data = await res.json();
-    return data.secure_url;
+  // Opens the hidden file picker when the image icon in the composer is clicked
+  const handleImageIconClick = () => {
+    if (isUploadingImage) return;
+    imageInputRef.current?.click();
   };
 
-  // Fired when a file is chosen from the hidden <input type="file"> in the composer
-  const handleImageSelected = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // reset so picking the same file twice in a row still fires onChange
+  // Firestore rejects any single field over ~1,048,487 bytes. We stay safely
+  // under that by resizing the image (canvas) and re-encoding as JPEG,
+  // shrinking dimensions/quality step by step until it fits.
+  const MAX_IMAGE_FIELD_BYTES = 700000; // leaves headroom for the rest of the doc
+
+  const compressImageToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+
+        let { width, height } = img;
+        let maxDimension = 1280;
+        let quality = 0.8;
+
+        const render = () => {
+          const scale = Math.min(1, maxDimension / Math.max(width, height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(width * scale));
+          canvas.height = Math.max(1, Math.round(height * scale));
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          return canvas.toDataURL("image/jpeg", quality);
+        };
+
+        let dataUrl = render();
+
+        // Shrink further if still too big, alternating between lowering
+        // quality and lowering max dimension so we converge quickly.
+        let attempts = 0;
+        while (dataUrl.length > MAX_IMAGE_FIELD_BYTES && attempts < 8) {
+          if (quality > 0.4) {
+            quality -= 0.15;
+          } else {
+            maxDimension = Math.round(maxDimension * 0.75);
+          }
+          dataUrl = render();
+          attempts += 1;
+        }
+
+        if (dataUrl.length > MAX_IMAGE_FIELD_BYTES) {
+          reject(new Error("Image is too large to send even after compression."));
+          return;
+        }
+
+        resolve(dataUrl);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Could not read the selected image file."));
+      };
+
+      img.src = objectUrl;
+    });
+
+  // Reads the selected image, compresses it to fit Firestore's field size
+  // limit, and saves it directly into the "messages" collection so it shows
+  // up in the chat thread like any other message.
+  const handleImageFileChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ""; // reset so picking the same file again still fires onChange
     if (!file || !activeChat) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      alert("Image must be smaller than 10MB.");
+      alert("Please select a valid image file.");
       return;
     }
 
     setIsUploadingImage(true);
     try {
-      const imageUrl = await uploadImageToCloudinary(file);
+      const base64Image = await compressImageToBase64(file);
 
-      await addDoc(collection(db, "messages"), {
-        imageUrl,
+      const docRef = await addDoc(collection(db, "messages"), {
+        text: "",
+        imageUrl: base64Image, // base64 JPEG data URL, stored directly in Firestore
         to: activeChat.id,
         from: uid,
         Time: serverTimestamp(),
       });
+      console.log("Image message written with ID:", docRef.id);
     } catch (error) {
-      console.error("Error sending image:", error);
-      alert("Failed to send image. Please try again.");
+      console.error("Error sending image message:", error);
+      alert(error.message || "Failed to send image message.");
     } finally {
       setIsUploadingImage(false);
     }
@@ -802,13 +845,13 @@ const Dashboard = () => {
                         className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
                       >
                         <div
-                          className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"} ${m.imageUrl ? "bubble-image" : ""}`}
+                          className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}
                         >
                           {m.imageUrl ? (
                             <img
                               src={m.imageUrl}
-                              alt="Attachment"
-                              className="message-image"
+                              alt="Sent"
+                              style={{ maxWidth: "220px", borderRadius: "8px", display: "block" }}
                             />
                           ) : (
                             m.text
@@ -821,31 +864,27 @@ const Dashboard = () => {
                 </section>
 
                 <footer className="composer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={imageInputRef}
+                    onChange={handleImageFileChange}
+                    style={{ display: "none" }}
+                  />
                   <button
                     className="icon-btn"
                     aria-label="Attach file"
+                    onClick={handleImageIconClick}
                     disabled={isUploadingImage}
-                    onClick={() => fileInputRef.current?.click()}
                   >
                     <svg viewBox="0 0 20 20" fill="currentColor">
                       <path d="M14.5 6.5l-6.36 6.36a2 2 0 102.83 2.83l6.01-6.01a3.5 3.5 0 10-4.95-4.95L5.5 11.26a5 5 0 007.07 7.07l6.01-6.01" />
                     </svg>
                   </button>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleImageSelected}
-                    style={{ display: "none" }}
-                  />
                   <div className="composer-input-shell">
                     <input
                       type="text"
-                      placeholder={
-                        isUploadingImage
-                          ? "Sending image..."
-                          : "Type a message..."
-                      }
+                      placeholder="Type a message..."
                       value={messageText}
                       onChange={(e) => setMessageText(e.target.value)}
                       onKeyDown={(e) =>
