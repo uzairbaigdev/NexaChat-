@@ -14,9 +14,6 @@ const Dashboard = () => {
   const [contacts, setContacts] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [messageText, setMessageText] = useState("");
-  // Image message upload (base64, same approach as chat.js) state
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const imageInputRef = useRef(null);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchInputValue, setGlobalSearchInputValue] = useState("");
   const [recivedReq, setRecivedReq] = useState([]);
@@ -34,6 +31,10 @@ const Dashboard = () => {
   const [requestsTab, setRequestsTab] = useState("received"); // "received" | "sent"
   const uid = window.localStorage.getItem("uid");
   const navigate = useNavigate();
+
+  // Image message upload state (base64, same approach as chat.js)
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef(null);
 
   const activeChat = contacts.find((c) => c.id === activeId) || null;
   // Filters the sidebar contacts list locally as the user types in "Search conversations"
@@ -282,15 +283,15 @@ const Dashboard = () => {
     }
   };
 
-  // Opens the hidden file picker when the image icon in the composer is clicked
+  // Opens the hidden file picker when the attach/image icon is clicked
   const handleImageIconClick = () => {
     if (isUploadingImage) return;
     imageInputRef.current?.click();
   };
 
-  // Firestore rejects any single field over ~1,048,487 bytes. We stay safely
-  // under that by resizing the image (canvas) and re-encoding as JPEG,
-  // shrinking dimensions/quality step by step until it fits.
+  // Firestore rejects any single field over ~1,048,487 bytes, so the image is
+  // resized (canvas) and re-encoded as JPEG, shrinking dimensions/quality
+  // step by step until it comfortably fits.
   const MAX_IMAGE_FIELD_BYTES = 700000; // leaves headroom for the rest of the doc
 
   const compressImageToBase64 = (file) =>
@@ -349,8 +350,8 @@ const Dashboard = () => {
     });
 
   // Reads the selected image, compresses it to fit Firestore's field size
-  // limit, and saves it directly into the "messages" collection so it shows
-  // up in the chat thread like any other message.
+  // limit, and saves it into the same "messages" collection as text
+  // messages so it shows up in the chat thread automatically.
   const handleImageFileChange = async (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = ""; // reset so picking the same file again still fires onChange
