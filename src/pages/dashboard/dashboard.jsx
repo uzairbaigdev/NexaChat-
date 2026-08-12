@@ -2,8 +2,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { data, useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import {
-  db, auth, onAuthStateChanged, query, where, getDocs, collection, addDoc, serverTimestamp,
-  getDoc, doc, updateDoc, onSnapshot
+  db,
+  auth,
+  onAuthStateChanged,
+  query,
+  where,
+  getDocs,
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDoc,
+  doc,
+  updateDoc,
+  onSnapshot,
 } from "../../firebaseConfig";
 import RequestList from "./RequestList";
 
@@ -42,13 +53,14 @@ const Dashboard = () => {
     const search = searchContacts.trim().toLowerCase();
     if (!search) return contacts;
 
-    return contacts.filter((c) =>
-      (c.name || "").toLowerCase().includes(search) ||
-      (c.email || "").toLowerCase().includes(search)
+    return contacts.filter(
+      (c) =>
+        (c.name || "").toLowerCase().includes(search) ||
+        (c.email || "").toLowerCase().includes(search),
     );
   };
 
-  //working on global search filtering accounts 
+  //working on global search filtering accounts
   useEffect(() => {
     const search = globalSearchInputValue.trim().toLowerCase();
 
@@ -58,12 +70,11 @@ const Dashboard = () => {
     }
 
     const filtered = allUsers.filter((user) =>
-      user.email?.toLowerCase().startsWith(search)
+      user.email?.toLowerCase().startsWith(search),
     );
 
     setMatchingAccounts(filtered);
   }, [globalSearchInputValue, allUsers]);
-
 
   // Check user auth state
   useEffect(() => {
@@ -108,19 +119,33 @@ const Dashboard = () => {
       setMessages(list);
     };
 
-    const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
-      sentMessages = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      mergeAndSetMessages();
-    }, (error) => {
-      console.error("Error listening to sent messages:", error);
-    });
+    const unsubscribeSent = onSnapshot(
+      sentQuery,
+      (snapshot) => {
+        sentMessages = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        mergeAndSetMessages();
+      },
+      (error) => {
+        console.error("Error listening to sent messages:", error);
+      },
+    );
 
-    const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
-      receivedMessages = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      mergeAndSetMessages();
-    }, (error) => {
-      console.error("Error listening to received messages:", error);
-    });
+    const unsubscribeReceived = onSnapshot(
+      receivedQuery,
+      (snapshot) => {
+        receivedMessages = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        mergeAndSetMessages();
+      },
+      (error) => {
+        console.error("Error listening to received messages:", error);
+      },
+    );
 
     return () => {
       unsubscribeSent();
@@ -135,7 +160,7 @@ const Dashboard = () => {
       const q = query(
         collection(db, "requests"),
         where("to", "==", uid),
-        where("status", "==", "pending")
+        where("status", "==", "pending"),
       );
 
       const querySnapshot = await getDocs(q);
@@ -146,7 +171,7 @@ const Dashboard = () => {
         console.log("no one has send request");
         setRecivedReq([]);
       } else {
-        console.log(querySnapshot)
+        console.log(querySnapshot);
         for (const requestDoc of querySnapshot.docs) {
           const requestData = requestDoc.data();
 
@@ -181,12 +206,12 @@ const Dashboard = () => {
       const sentQuery = query(
         collection(db, "requests"),
         where("from", "==", uid),
-        where("status", "==", "accepted")
+        where("status", "==", "accepted"),
       );
       const receivedQuery = query(
         collection(db, "requests"),
         where("to", "==", uid),
-        where("status", "==", "accepted")
+        where("status", "==", "accepted"),
       );
 
       const [sentSnap, receivedSnap] = await Promise.all([
@@ -209,9 +234,7 @@ const Dashboard = () => {
 
           // Find the other user in the conversation
           const targetUID =
-            requestData.from === uid
-              ? requestData.to
-              : requestData.from;
+            requestData.from === uid ? requestData.to : requestData.from;
 
           // Look up the other user directly by their document ID
           const userRef = doc(db, "users", targetUID);
@@ -226,7 +249,7 @@ const Dashboard = () => {
               });
             }
           }
-        })
+        }),
       );
 
       setContacts(users);
@@ -334,7 +357,9 @@ const Dashboard = () => {
         }
 
         if (dataUrl.length > MAX_IMAGE_FIELD_BYTES) {
-          reject(new Error("Image is too large to send even after compression."));
+          reject(
+            new Error("Image is too large to send even after compression."),
+          );
           return;
         }
 
@@ -440,11 +465,15 @@ const Dashboard = () => {
 
       // refresh sidebar contacts so the newly accepted user shows up
       getAcceptedContacts();
-
     } catch (error) {
       console.error(error);
     }
   };
+
+
+
+
+
 
 
   return (
@@ -484,7 +513,6 @@ const Dashboard = () => {
               </button>
             </div>
           </header>
-
 
           {/* list of request */}
 
@@ -631,6 +659,7 @@ const Dashboard = () => {
                       d="M4 5.5C4 4.67157 4.67157 4 5.5 4H18.5C19.3284 4 20 4.67157 20 5.5V15.5C20 16.3284 19.3284 17 18.5 17H9L5 20.5V17H5.5C4.67157 17 4 16.3284 4 15.5V5.5Z"
                       fill="url(#brandGradDash)"
                     />
+                    
                     <defs>
                       <linearGradient
                         id="brandGradDash"
@@ -706,7 +735,9 @@ const Dashboard = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <input type="text" placeholder="Search conversations"
+                <input
+                  type="text"
+                  placeholder="Search conversations"
                   value={searchContacts}
                   onChange={(e) => setSearchContacts(e.target.value)}
                 />
@@ -740,8 +771,6 @@ const Dashboard = () => {
                     <p>No contacts matching "{searchContacts}"</p>
                   </div>
                 ) : (
-
-
                   fetchContactsLocally().map((c) => (
                     <button
                       key={c.id}
@@ -852,7 +881,11 @@ const Dashboard = () => {
                             <img
                               src={m.imageUrl}
                               alt="Sent"
-                              style={{ maxWidth: "220px", borderRadius: "8px", display: "block" }}
+                              style={{
+                                maxWidth: "220px",
+                                borderRadius: "8px",
+                                display: "block",
+                              }}
                             />
                           ) : (
                             m.text

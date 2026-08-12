@@ -276,6 +276,46 @@ body {
   filter: brightness(1.08);
 }
 
+.upload-svg{
+  height: 25px ;
+  width: 25px;
+  stroke: black;
+
+}
+.upload-cion-txt-con{
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 5px;
+  text-transform: capitalize;
+}
+
+.prev-imgBtn-con{
+  display: flex;
+  align-items: center;
+  margin: 4px 0px;
+  width: 100%;
+  max-width: 400px;
+  justify-content: space-around;
+}
+
+.dp-update-btn{
+ text-transform: capitalize;
+ font-size: medium;
+ font-weight: 600;
+ line-height: 10px;
+ border-radius: 7px;
+ border: 1px solid #12131c;
+ color: #12131c;
+ background: #6366f1;
+ padding: 9px; 
+ cursor: pointer;
+ /* background-color: transparent; */
+  /* border: none; */
+}
+
+
+
 @media (max-width: 420px) {
   .modal-card {
     padding: 24px 20px 20px;

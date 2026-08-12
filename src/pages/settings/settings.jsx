@@ -1,12 +1,57 @@
-import React, { useState,useEffect } from "react";
+import React, { useState,useEffect, useRef } from "react";
 import "./settings.css";
 import { signOut } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { auth,onAuthStateChanged } from "../../firebaseConfig.js";
+import axios from'axios'
 
 const Settings = () => {
   const navigate = useNavigate();
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+  const fileInputRef = useRef(null)
+  const[prevURL , setPrevURL] = useState('')
+  const[profileImg , setProfileImg] = useState(null)
+  // image uploading work
+   
+
+   const openFileSelect = () =>{
+    fileInputRef.current.click()
+  }
+
+    const handleFileChange = (e)=>{
+    setProfileImg(e.target.files[0])
+    setPrevURL(URL.createObjectURL(e.target.files[0]))
+  }
+
+  const profileUpdateBtn = async () =>{
+    if (profileImg) {
+      
+      let fromData = new FormData()
+
+      fromData.append('file', profileImg )
+      fromData.append('upload_preset' ,'NexaChat')
+      fromData.append('folder', 'NCProfileImg')
+
+      try {
+
+        let postImg = await fetch('https://api.cloudinary.com/v1_1/cieksb93/image/upload' , {
+          method:'post',
+          body: fromData  
+        })
+
+        let urlImg = await postImg.json()
+        console.log(urlImg)
+
+        
+
+      } catch (error) {
+        console.error(error)
+      }
+
+    }    
+  }
+
+
 
   // checking if user exist or not
   useEffect(() => {
@@ -68,9 +113,69 @@ const Settings = () => {
           <p className="settings-subtitle">Manage your account preferences</p>
 
           <section className="settings-section">
+
             <h2 className="section-label">Account</h2>
 
             <div className="settings-card">
+          {
+          
+          (prevURL.length > 0) ? 
+          
+          <div className="prev-imgBtn-con" >
+            <img width={80} height={80} style={{objectFit:'cover' , 
+            border:'1px solid black' , 
+            borderRadius:'50%'}} src={prevURL} />
+
+            <button onClick={profileUpdateBtn} className="dp-update-btn">update know </button>
+          </div>
+          :
+          null
+          }
+              
+              <input 
+              type="file"
+              accept="image/*"
+              multiple
+              style={{display:'none'}}
+              ref={fileInputRef}
+              onLoad={URL.revokeObjectURL(fileInputRef)}
+              onChange={handleFileChange}
+               />
+
+              <button 
+              type="submit"
+              className="settings-row settings-row-danger"
+              onClick={openFileSelect}
+              > 
+
+
+              <span className="row-text upload-cion-txt-con row-desc">
+                
+                <svg className="upload-svg"
+                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+        
+               </svg>
+
+              update your profile image
+
+              </span>
+
+              <svg className="row-chevron" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M7.3 4.3a1 1 0 000 1.4L11.58 10l-4.3 4.3a1 1 0 001.42 1.4l5-5a1 1 0 000-1.4l-5-5a1 1 0 00-1.4 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              
+              </button>
+
+            </div>
+
+
+            <div className="settings-card">
+
               <button
                 type="button"
                 className="settings-row settings-row-danger"
@@ -85,6 +190,7 @@ const Settings = () => {
                     />
                   </svg>
                 </span>
+                
                 <span className="row-text">
                   <span className="row-title">Log Out</span>
                   <span className="row-desc">Sign out of your account on this device</span>
@@ -97,6 +203,7 @@ const Settings = () => {
                   />
                 </svg>
               </button>
+
             </div>
           </section>
         </div>
