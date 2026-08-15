@@ -22,12 +22,14 @@ const Dashboard = () => {
   const [messages, setMessages] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [userEmail, setUserEmail] = useState("");
+  const [myImageURL, setMyImageURL] = useState("");
   const [contacts, setContacts] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchInputValue, setGlobalSearchInputValue] = useState("");
   const [recivedReq, setRecivedReq] = useState([]);
+  const [sentReq, setSentReq] = useState([]); // requests the logged-in user has sent to others
   const [matchingAccounts, setMatchingAccounts] = useState([]);
   const [searchContacts, setSearchContacts] = useState("");
   let searchPrefix = globalSearchInputValue.trim().toLowerCase();
@@ -78,11 +80,21 @@ const Dashboard = () => {
 
   // Check user auth state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         navigate("/signup");
       } else {
         setUserEmail(user.email);
+
+        // Load the logged-in user's own profile image (shown in the sidebar)
+        try {
+          const userSnap = await getDoc(doc(db, "users", user.uid));
+          if (userSnap.exists()) {
+            setMyImageURL(userSnap.data().imageURL || "");
+          }
+        } catch (error) {
+          console.error("Error fetching profile image:", error);
+        }
       }
     });
     return () => unsubscribe();
@@ -200,6 +212,43 @@ const Dashboard = () => {
     setShowList(true);
   };
 
+  // Fetch requests that the logged-in user has SENT to other people.
+  // The recipient's name/email were already saved on the request document
+  // when it was created (toName/toEmail), so we don't need an extra
+  // Firestore read per request like receivedRequests() does.
+  const sentRequests = async () => {
+    try {
+      const q = query(
+        collection(db, "requests"),
+        where("from", "==", uid),
+        where("status", "==", "pending"),
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        console.log("no requests sent yet");
+        setSentReq([]);
+      } else {
+        const list = querySnapshot.docs.map((requestDoc) => {
+          const requestData = requestDoc.data();
+          return {
+            id: requestDoc.id,
+            ...requestData,
+            name: requestData.toName,
+            email: requestData.toEmail,
+          };
+        });
+
+        setSentReq(list);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    setShowList(true);
+  };
+
   // Fetch sidebar contact list — only users whose request is accepted
   const getAcceptedContacts = async () => {
     try {
@@ -264,6 +313,33 @@ const Dashboard = () => {
     }
   }, [uid]);
 
+  // Fetch every user in the "users" collection so global search has data to
+  // filter against locally. Without this, `allUsers` stays empty forever and
+  // global search can never find anyone.
+  const fetchAllUsers = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "users"));
+
+      const users = querySnapshot.docs
+        .map((userDoc) => ({
+          id: userDoc.id,
+          ...userDoc.data(),
+        }))
+        // Don't show the logged-in user in their own search results
+        .filter((user) => user.id !== uid);
+
+      setAllUsers(users);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (uid) {
+      fetchAllUsers();
+    }
+  }, [uid]);
+
   // Close the "more options" menu whenever the user clicks outside of it
   useEffect(() => {
     if (!isMoreMenuOpen) return;
@@ -282,6 +358,8 @@ const Dashboard = () => {
   const handleOpenRequestFromMenu = () => {
     setIsMoreMenuOpen(false);
     setIsRequestsPageOpen(true);
+    setRequestsTab("received");
+    receivedRequests(); // load data immediately so the page isn't blank
   };
 
   // Closes the Requests page and returns to the main dashboard
@@ -500,14 +578,18 @@ const Dashboard = () => {
               <button
                 className={`requests-tab ${requestsTab === "received" ? "requests-tab-active" : ""}`}
                 onClick={() => {
-                  (setRequestsTab("received"), receivedRequests());
+                  setRequestsTab("received");
+                  receivedRequests();
                 }}
               >
                 Received
               </button>
               <button
                 className={`requests-tab ${requestsTab === "sent" ? "requests-tab-active" : ""}`}
-                onClick={() => setRequestsTab("sent")}
+                onClick={() => {
+                  setRequestsTab("sent");
+                  sentRequests();
+                }}
               >
                 Sent
               </button>
@@ -518,7 +600,7 @@ const Dashboard = () => {
 
           {showList && (
             <RequestList
-              request={recivedReq || []}
+              request={(requestsTab === "sent" ? sentReq : recivedReq) || []}
               requestsTab={requestsTab}
               handleAccept={handleAccept}
             />
@@ -614,9 +696,17 @@ const Dashboard = () => {
                     <div key={account.id} className="global-search-card">
                       <div className="global-search-user-info">
                         <div className="avatar">
-                          {(account.name || account.email || "?")
-                            .charAt(0)
-                            .toUpperCase()}
+                          {account.imageURL ? (
+                            <img
+                              src={account.imageURL}
+                              alt="Profile"
+                              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                            />
+                          ) : (
+                            (account.name || account.email || "?")
+                              .charAt(0)
+                              .toUpperCase()
+                          )}
                         </div>
                         <div className="global-search-details">
                           <span className="global-search-name">
@@ -778,7 +868,15 @@ const Dashboard = () => {
                       onClick={() => setActiveId(c.id)}
                     >
                       <div className="avatar">
-                        {(c.name || c.email || "?").charAt(0).toUpperCase()}
+                        {c.imageURL ? (
+                          <img
+                            src={c.imageURL}
+                            alt="Profile"
+                            style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                          />
+                        ) : (
+                          (c.name || c.email || "?").charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div className="chat-item-body">
                         <div className="chat-item-top">
@@ -799,9 +897,17 @@ const Dashboard = () => {
 
               <div className="profile-card">
                 <div className="avatar avatar-self">
-                  <svg viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 9a4 4 0 100-8 4 4 0 000 8zM10 11c-4.42 0-8 2.24-8 5v1a1 1 0 001 1h14a1 1 0 001-1v-1c0-2.76-3.58-5-8-5z" />
-                  </svg>
+                  {myImageURL ? (
+                    <img
+                      src={myImageURL}
+                      alt="Profile"
+                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                    />
+                  ) : (
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 9a4 4 0 100-8 4 4 0 000 8zM10 11c-4.42 0-8 2.24-8 5v1a1 1 0 001 1h14a1 1 0 001-1v-1c0-2.76-3.58-5-8-5z" />
+                    </svg>
+                  )}
                 </div>
                 <div className="profile-info">
                   <span className="profile-email">{userEmail}</span>
@@ -830,9 +936,17 @@ const Dashboard = () => {
                 <header className="chat-header">
                   <div className="chat-header-left">
                     <div className="avatar">
-                      {(activeChat.name || activeChat.email || "?")
-                        .charAt(0)
-                        .toUpperCase()}
+                      {activeChat.imageURL ? (
+                        <img
+                          src={activeChat.imageURL}
+                          alt="Profile"
+                          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                        />
+                      ) : (
+                        (activeChat.name || activeChat.email || "?")
+                          .charAt(0)
+                          .toUpperCase()
+                      )}
                     </div>
                     <div>
                       <div className="chat-header-name">

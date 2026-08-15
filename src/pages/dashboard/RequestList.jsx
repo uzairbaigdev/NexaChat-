@@ -12,7 +12,7 @@ const RequestList = ({
           {request &&
             request.map((request) => {
               return (
-                <div key={request.name} className="request-card">
+                <div key={request.id} className="request-card">
                   <div className="request-user-info">
                     <div className="avatar">
                       {request.name

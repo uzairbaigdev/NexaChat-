@@ -1,0 +1,329 @@
+/* ================================
+   Edit Profile Image
+================================ */
+
+.edit-image-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #111827;
+}
+
+
+/* ================================
+   Top Bar
+================================ */
+
+.edit-image-topbar {
+  height: 72px;
+  padding: 0 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+
+/* Back Button */
+
+.back-link {
+  text-decoration: none;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 0;
+
+  border: none;
+  background: transparent;
+
+  color: #4b5563;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.back-button span {
+  font-size: 20px;
+}
+
+.back-button:hover {
+  color: #6366f1;
+}
+
+
+/* ================================
+   NexaChat Brand
+================================ */
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.brand-word {
+  font-size: 20px;
+  font-weight: 700;
+
+  background: linear-gradient(
+    90deg,
+    #6366f1,
+    #22d3ee
+  );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+
+/* ================================
+   Main Content
+================================ */
+
+.edit-image-content {
+  padding: 50px 20px;
+}
+
+.edit-image-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+
+/* ================================
+   Heading
+================================ */
+
+.page-heading {
+  margin-bottom: 28px;
+}
+
+.page-heading h1 {
+  margin: 0 0 8px;
+
+  font-size: 30px;
+  font-weight: 700;
+
+  color: #111827;
+}
+
+.page-heading p {
+  margin: 0;
+
+  color: #6b7280;
+
+  font-size: 15px;
+}
+
+
+/* ================================
+   Image Card
+================================ */
+
+.image-card {
+  padding: 40px 30px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+
+  text-align: center;
+
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+}
+
+
+/* ================================
+   Current Image
+================================ */
+
+.current-image {
+  width: 130px;
+  height: 130px;
+
+  margin-bottom: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    #6366f1,
+    #22d3ee
+  );
+
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.25);
+}
+
+.current-image span {
+  color: #ffffff;
+
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.current-image img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+/* ================================
+   Text
+================================ */
+
+.image-card h2 {
+  margin: 0 0 8px;
+
+  color: #111827;
+
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.image-description {
+  max-width: 400px;
+
+  margin: 0 0 24px;
+
+  color: #6b7280;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+
+/* ================================
+   Change Image
+================================ */
+
+.change-image-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px 22px;
+
+  border: none;
+  border-radius: 9px;
+
+  background: linear-gradient(
+    135deg,
+    #6366f1,
+    #22d3ee
+  );
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.20);
+
+  transition: 0.2s ease;
+}
+
+.change-image-button:hover {
+  transform: translateY(-1px);
+
+  box-shadow: 0 9px 22px rgba(99, 102, 241, 0.28);
+}
+
+.change-image-button input {
+  display: none;
+}
+
+.change-image-button:has(input:disabled) {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+
+/* ================================
+   Image Note
+================================ */
+
+.image-note {
+  margin: 14px 0 0;
+
+  color: #9ca3af;
+
+  font-size: 12px;
+}
+
+
+/* ================================
+   Responsive
+================================ */
+
+@media (max-width: 600px) {
+
+  .edit-image-topbar {
+    height: 64px;
+    padding: 0 20px;
+  }
+
+  .brand-word {
+    font-size: 18px;
+  }
+
+  .edit-image-content {
+    padding: 32px 15px;
+  }
+
+  .page-heading h1 {
+    font-size: 26px;
+  }
+
+  .image-card {
+    padding: 32px 20px;
+    border-radius: 14px;
+  }
+
+  .current-image {
+    width: 110px;
+    height: 110px;
+  }
+
+  .current-image span {
+    font-size: 40px;
+  }
+}
+

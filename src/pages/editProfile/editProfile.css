@@ -1,0 +1,349 @@
+```css
+/* ================================
+   Edit Profile Page
+================================ */
+
+.edit-profile-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #111827;
+}
+
+
+/* ================================
+   Top Bar
+================================ */
+
+.edit-profile-topbar {
+  height: 72px;
+  padding: 0 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+
+/* Back Button */
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 0;
+
+  border: none;
+  background: transparent;
+
+  color: #4b5563;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.back-button span {
+  font-size: 20px;
+}
+
+.back-button:hover {
+  color: #6366f1;
+}
+
+
+/* ================================
+   NexaChat Brand
+================================ */
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.brand-word {
+  font-size: 20px;
+  font-weight: 700;
+
+  background: linear-gradient(
+    90deg,
+    #6366f1,
+    #22d3ee
+  );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+
+/* ================================
+   Main Content
+================================ */
+
+.edit-profile-content {
+  padding: 50px 20px;
+}
+
+.edit-profile-container {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+
+/* ================================
+   Heading
+================================ */
+
+.edit-profile-heading {
+  margin-bottom: 30px;
+}
+
+.edit-profile-heading h1 {
+  margin: 0 0 8px;
+
+  font-size: 30px;
+  font-weight: 700;
+
+  color: #111827;
+}
+
+.edit-profile-heading p {
+  margin: 0;
+
+  color: #6b7280;
+
+  font-size: 15px;
+}
+
+
+/* ================================
+   Section
+================================ */
+
+.edit-profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-label {
+  margin: 0 0 6px;
+
+  color: #6b7280;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+
+/* ================================
+   Setting Cards
+================================ */
+
+.profile-setting-card {
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+
+  transition: 0.2s ease;
+}
+
+.profile-setting-card:hover {
+  border-color: #c7d2fe;
+
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.08);
+
+  transform: translateY(-1px);
+}
+
+
+/* ================================
+   Setting Row
+================================ */
+
+.profile-setting-row {
+  width: 100%;
+  min-height: 82px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 16px 20px;
+
+  border: none;
+  background: transparent;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+
+/* ================================
+   Icons
+================================ */
+
+.profile-setting-icon {
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-right: 16px;
+
+  border-radius: 12px;
+
+  color: #6366f1;
+  background: #eef2ff;
+}
+
+.profile-setting-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+
+/* Different Icon Backgrounds */
+
+.username-icon {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.bio-icon {
+  color: #0891b2;
+  background: #ecfeff;
+}
+
+
+/* ================================
+   Text
+================================ */
+
+.profile-setting-text {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.profile-setting-title {
+  color: #111827;
+
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.profile-setting-description {
+  color: #6b7280;
+
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+
+/* ================================
+   Chevron
+================================ */
+
+.setting-chevron {
+  margin-left: 15px;
+
+  color: #9ca3af;
+
+  font-size: 28px;
+  font-weight: 300;
+
+  line-height: 1;
+
+  transition: 0.2s ease;
+}
+
+.profile-setting-card:hover .setting-chevron {
+  color: #6366f1;
+  transform: translateX(3px);
+}
+
+
+/* ================================
+   Responsive
+================================ */
+
+@media (max-width: 600px) {
+
+  .edit-profile-topbar {
+    height: 64px;
+    padding: 0 20px;
+  }
+
+  .brand-word {
+    font-size: 18px;
+  }
+
+  .edit-profile-content {
+    padding: 32px 15px;
+  }
+
+  .edit-profile-heading h1 {
+    font-size: 26px;
+  }
+
+  .profile-setting-row {
+    min-height: 76px;
+    padding: 14px 16px;
+  }
+
+  .profile-setting-icon {
+    width: 40px;
+    height: 40px;
+
+    margin-right: 13px;
+  }
+
+  .profile-setting-title {
+    font-size: 14px;
+  }
+
+  .profile-setting-description {
+    font-size: 12px;
+  }
+
+  .setting-chevron {
+    font-size: 25px;
+  }
+}
+```
