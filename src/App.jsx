@@ -8,6 +8,7 @@ import Settings from "./pages/settings/settings";
 import EditProfile from "./pages/editProfile/editProfile";
 import EditProfileImage from "./pages/editProfileImage/editProfileImage";
 import NotFound from "./pages/nofound/notFound";
+import EditUserName from "./pages/editUserName/EditUserName";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <Route path="/settings" element={<Settings />} />
       <Route path="/settings/editprofile" element={<EditProfile/>}/>
       <Route path="/settings/editprofile/editprofileimage" element={<EditProfileImage />} />
+      <Route path="/settings/editprofile/editusername" element={<EditUserName />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

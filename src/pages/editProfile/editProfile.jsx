@@ -101,31 +101,33 @@ const EditProfile = () => {
 
                         {/* Edit Username */}
                         <div className="profile-setting-card">
+                            <Link to={'/settings/editprofile/editusername'} >
 
-                            <button className="profile-setting-row">
+                                <button className="profile-setting-row">
 
-                                <span className="profile-setting-icon username-icon">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"
-                                        />
-                                    </svg>
-                                </span>
-
-                                <span className="profile-setting-text">
-                                    <span className="profile-setting-title">
-                                        Username
+                                    <span className="profile-setting-icon username-icon">
+                                        <svg viewBox="0 0 24 24" fill="currentColor">
+                                            <path
+                                                d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v3h20v-3c0-3.33-6.67-5-10-5z"
+                                            />
+                                        </svg>
                                     </span>
 
-                                    <span className="profile-setting-description">
-                                        Change your username
+                                    <span className="profile-setting-text">
+                                        <span className="profile-setting-title">
+                                            Username
+                                        </span>
+
+                                        <span className="profile-setting-description">
+                                            Change your username
+                                        </span>
                                     </span>
-                                </span>
 
-                                <span className="setting-chevron">›</span>
+                                    <span className="setting-chevron">›</span>
 
-                            </button>
+                                </button>
 
+                            </Link>
                         </div>
 
 
