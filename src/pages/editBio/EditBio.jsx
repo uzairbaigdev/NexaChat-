@@ -1,36 +1,57 @@
-import React, { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useRef, useState } from 'react'
+import { data, Link } from 'react-router-dom'
 import './EditBio.css'
-import { doc, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, query, setDoc, where } from 'firebase/firestore'
 import { db } from '../../firebaseConfig'
 
 const EditBio = () => {
 
-  const [bioTxt , setBioTxt] = useState(null)
+  const [bioTxt  , setBioTxt] = useState(null)
+  const [prevBio , setPrevBio] = useState(null)
+  const [loading , setLoading] = useState(false)
+  const inputRef = useRef(null)
   const Uid = localStorage.getItem('uid')
-  console.log(Uid)
 
-  const setBio = () => {
+  const setBio = async () => {
+
     try {
-      if(setBioTxt.length <= 200 && '' ){
-      let docRef = doc(db , 'users', Uid )
-      setDoc(docRef,{
+    setLoading(true)
+    let docRef = doc(db , 'users', Uid )
+     await setDoc(docRef,{
        bio: bioTxt
       },{merge:true})
-    }else{
-      alert('fill this filed')
-    }
+setLoading(false)
+alert('bio update successfully')
   }
      catch (error) {
+      setLoading(false)
+
       console.error(new Error(error))
     }
   }
 
+  useEffect(()=>{
+
+      
+      try {     
+        let docRef = doc(db , 'users',Uid)
+        const unsub =  onSnapshot(docRef,(docSnap)=>{
+        setPrevBio(docSnap.data().bio)
+         })
+
+         return ()=> unsub()
+      
+      } catch (error) {
+        console.error(new Error(error))
+      }
+    
+  },[Uid])
+
   return (
     <>
       <div className='edit-profile-page'>
-
-        <header className="edit-profile-topbar">
+        
+      <header className="edit-profile-topbar">
           <Link to="/settings" className="back-link">
             <button className="back-button">
               <span>←</span>
@@ -73,16 +94,18 @@ const EditBio = () => {
 
             <div className='prev-bio-con'>
               <div className='em-box'>
-                <textarea 
+                <textarea
+                ref={inputRef} 
                   onChange={(e)=>{setBioTxt(e.target.value)}} 
-                  className='bio-input' 
-                  defaultValue={bioTxt}
+                  className='bio-input'
+                  defaultValue={prevBio}
                   placeholder="Write your bio here..."
                   maxLength={200}
                 />
               </div>
               <div onClick={() => setBio()} className='change-image-button'>
-                <span>Save Bio</span>
+                {(loading) ? <span class="loader"></span>:
+                <span>Save Bio</span>}
               </div>
 
               
