@@ -14,6 +14,7 @@ const EditUserName = () => {
 
 
     const handleUpdate = async () => {
+
         try {
 
             let uid = localStorage.getItem("uid");
@@ -73,7 +74,7 @@ const EditUserName = () => {
                         <svg viewBox="0 0 24 24" fill="none">
                             <path
                                 d="M4 5.5C4 4.67 4.67 4 5.5 4H18.5C19.33 4 20 4.67 20 5.5V15.5C20 16.33 19.33 17 18.5 17H9L5 20.5V17H5.5C4.67 17 4 16.33 4 15.5V5.5Z"
-                                fill="url(#imageGradient)"
+                                 fill="url(#imageGradient)"
                             />
 
                             <defs>

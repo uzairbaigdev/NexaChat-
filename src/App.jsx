@@ -9,6 +9,7 @@ import EditProfile from "./pages/editProfile/editProfile";
 import EditProfileImage from "./pages/editProfileImage/editProfileImage";
 import NotFound from "./pages/nofound/notFound";
 import EditUserName from "./pages/editUserName/EditUserName";
+import EditBio from "./pages/editBio/EditBio";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <Route path="/settings/editprofile" element={<EditProfile/>}/>
       <Route path="/settings/editprofile/editprofileimage" element={<EditProfileImage />} />
       <Route path="/settings/editprofile/editusername" element={<EditUserName />} />
+      <Route path="/settings/editprofile/editBio" element={<EditBio />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

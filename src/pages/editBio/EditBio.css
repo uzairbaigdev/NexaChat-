@@ -1,0 +1,182 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.edit-profile-page {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Styling */
+.edit-profile-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.back-link {
+  text-decoration: none;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.brand-word {
+  font-weight: 700;
+  font-size: 18px;
+  color: #38bdf8;
+}
+
+/* Main Content & Card */
+.main-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.wrapper-con {
+  background: #ffffff;
+  width: 100%;
+  max-width: 540px;
+  padding: 40px 36px;
+  border-radius: 20px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
+  text-align: center;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 28px;
+}
+
+.prev-bio-con {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Bio Input Box Container */
+.em-box {
+  width: 100%;
+  margin-bottom: 24px;
+  font-style: normal;
+}
+
+.bio-input {
+  width: 100%;
+  height: 120px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1e293b;
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+}
+
+.bio-input:focus {
+  background-color: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* Save / Edit Button */
+.change-image-button {
+  min-width: 180px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #6366f1 0%, #22d3ee 100%);
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  user-select: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.change-image-button:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.change-image-button:active {
+  transform: translateY(0);
+}
+
+.helper-text {
+  margin-top: 18px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+/* .em-box span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 8;
+    overflow: hidden;
+    line-height: 20px;
+    word-break: normal;
+    overflow-wrap: normal;
+    white-space: normal;
+    hyphens: none;
+}
+
+.change-image-button {
+  display: inline-flex;
+  text-transform: capitalize;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(
+    135deg,
+    #6366f1,
+    #22d3ee
+  );} */
+
+

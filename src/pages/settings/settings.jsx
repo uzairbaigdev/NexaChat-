@@ -86,6 +86,7 @@ const Settings = () => {
             <h2 className="section-label">Account</h2>
 
             {/* Edit Profile */}
+            
             <div className="settings-card">
               <Link to="/settings/editprofile" className="settings-row-link">
                 <button
@@ -121,6 +122,9 @@ const Settings = () => {
                 </button>
               </Link>
             </div>
+
+
+
 
             {/* Logout */}
             <div className="settings-card">
