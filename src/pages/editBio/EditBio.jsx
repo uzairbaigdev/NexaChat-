@@ -1,57 +1,64 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { data, Link } from 'react-router-dom'
-import './EditBio.css'
-import { collection, doc, getDoc, onSnapshot, query, setDoc, where } from 'firebase/firestore'
-import { db } from '../../firebaseConfig'
+import React, { useEffect, useRef, useState } from "react";
+import { data, Link } from "react-router-dom";
+import "./EditBio.css";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "../../firebaseConfig";
 
 const EditBio = () => {
-
-  const [bioTxt  , setBioTxt] = useState(null)
-  const [prevBio , setPrevBio] = useState(null)
-  const [loading , setLoading] = useState(false)
-  const inputRef = useRef(null)
-  const Uid = localStorage.getItem('uid')
+  const [bioTxt, setBioTxt] = useState(null);
+  const [prevBio, setPrevBio] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [getBioData , setBioData] = useState(false) // this flag method for geting data loader 
+  const inputRef = useRef(null);
+  const Uid = localStorage.getItem("uid");
 
   const setBio = async () => {
-
     try {
-    setLoading(true)
-    let docRef = doc(db , 'users', Uid )
-     await setDoc(docRef,{
-       bio: bioTxt
-      },{merge:true})
-setLoading(false)
-alert('bio update successfully')
-  }
-     catch (error) {
-      setLoading(false)
+      setLoading(true);
+      let docRef = doc(db, "users", Uid);
+      await setDoc(
+        docRef,
+        {
+          bio: bioTxt,
+        },
+        { merge: true },
+      );
+      setLoading(false);
+      alert("bio update successfully");
+    } catch (error) {
+      setLoading(false);
 
-      console.error(new Error(error))
+      console.error(new Error(error));
     }
-  }
+  };
 
-  useEffect(()=>{
-
-      
-      try {     
-        let docRef = doc(db , 'users',Uid)
-        const unsub =  onSnapshot(docRef,(docSnap)=>{
-        setPrevBio(docSnap.data().bio)
-         })
-
-         return ()=> unsub()
-      
-      } catch (error) {
-        console.error(new Error(error))
-      }
+  useEffect(() => {
     
-  },[Uid])
-
+    setBioData(true)
+    try {
+      let docRef = doc(db, "users", Uid);
+      const unsub = onSnapshot(docRef, (docSnap) => {
+        setPrevBio(docSnap.data().bio);
+        setBioData(false)
+      });
+      return () => unsub();
+    } catch (error) {
+      setBioData(false)
+      console.error(new Error(error));
+    }
+  }, [Uid]);
   return (
     <>
-      <div className='edit-profile-page'>
-        
-      <header className="edit-profile-topbar">
+      <div className="edit-profile-page">
+        <header className="edit-profile-topbar">
           <Link to="/settings" className="back-link">
             <button className="back-button">
               <span>←</span>
@@ -86,37 +93,35 @@ alert('bio update successfully')
           </div>
         </header>
 
-        <main className='main-container'>
-          <div className='wrapper-con'>
-
+        <main className="main-container"> 
+          <div className="wrapper-con">
             <h1 className="page-title">Edit Profile Bio</h1>
-            <p className="page-subtitle">Update your personal bio on NexaChat</p>
+            <p className="page-subtitle">
+              Update your personal bio on NexaChat
+            </p>
 
-            <div className='prev-bio-con'>
-              <div className='em-box'>
+            <div className="prev-bio-con">
+              <div className="em-box">
                 <textarea
-                ref={inputRef} 
-                  onChange={(e)=>{setBioTxt(e.target.value)}} 
-                  className='bio-input'
+                  ref={inputRef}
+                  onChange={(e) => {
+                   (prevBio == e.target.value ) ? setBioTxt(prevBio) : setBioTxt(e.target.value);
+                  }}
+                  className="bio-input"
                   defaultValue={prevBio}
                   placeholder="Write your bio here..."
                   maxLength={200}
                 />
               </div>
-              <div onClick={() => setBio()} className='change-image-button'>
-                {(loading) ? <span class="loader"></span>:
-                <span>Save Bio</span>}
+              <div style={{ pointerEvents : getBioData ? 'none' : 'auto'}} onClick={() => setBio()} className="change-image-button">
+                {loading ? <span class="loader"></span> : <span>Save Bio</span>}
               </div>
-
-              
             </div>
-
           </div>
         </main>
-
       </div>
     </>
-  )
-}
+  );
+};
 
-export default EditBio
+export default EditBio;
