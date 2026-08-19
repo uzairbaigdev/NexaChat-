@@ -15,6 +15,7 @@ import {
   doc,
   updateDoc,
   onSnapshot,
+  deleteDoc
 } from "../../firebaseConfig";
 import RequestList from "./RequestList";
 
@@ -32,7 +33,6 @@ const Dashboard = () => {
   const [sentReq, setSentReq] = useState([]); // requests the logged-in user has sent to others
   const [matchingAccounts, setMatchingAccounts] = useState([]);
   const [searchContacts, setSearchContacts] = useState("");
-  const [crudMsg ,setCrudMsg ] = useState(false)
   let searchPrefix = globalSearchInputValue.trim().toLowerCase();
   let [showList, setShowList] = useState(false);
   
@@ -50,6 +50,9 @@ const Dashboard = () => {
   // Image message upload state (base64, same approach as chat.js)
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const imageInputRef = useRef(null);
+
+  //handle message delete
+  const [messageDeleteID,setMessageDeleteID] = useState(null);
 
   const activeChat = contacts.find((c) => c.id === activeId) || null;
   // Filters the sidebar contacts list locally as the user types in "Search conversations"
@@ -957,6 +960,27 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="chat-header-actions">
+                    <button
+                     className="icon-btn icon-btn-delete" aria-label="Delete conversation"
+                     onClick={
+                       async () => {
+                         if (messageDeleteID) {
+                           await deleteDoc(doc(db, "messages", messageDeleteID));
+                           setMessageDeleteID(null);
+                           console.log("Message deleted successfully");
+                           document.querySelector(".icon-btn-delete").style.display = "none";
+                         }
+                       }
+                     }
+                     >
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M8.5 2a1 1 0 00-.894.553L7.191 3.5H4a1 1 0 000 2h.106l.732 9.15A2 2 0 006.832 16.5h6.336a2 2 0 001.994-1.85l.732-9.15H16a1 1 0 100-2h-3.191l-.415-.947A1 1 0 0011.5 2h-3zm-.5 5a1 1 0 011 1v5a1 1 0 11-2 0V8a1 1 0 011-1zm4 0a1 1 0 011 1v5a1 1 0 11-2 0V8a1 1 0 011-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
                     <button className="icon-btn" aria-label="Voice call">
                       <svg viewBox="0 0 20 20" fill="currentColor">
                         <path d="M3.5 3A1.5 1.5 0 002 4.5v.5c0 8.28 6.72 15 15 15h.5a1.5 1.5 0 001.5-1.5v-2.29a1.5 1.5 0 00-1.06-1.43l-3.02-.94a1.5 1.5 0 00-1.55.38l-.9.9a11.05 11.05 0 01-5.09-5.09l.9-.9a1.5 1.5 0 00.38-1.55l-.94-3.02A1.5 1.5 0 006.79 3H4.5z" />
@@ -986,39 +1010,41 @@ const Dashboard = () => {
                     </div>
                   ) : (
                     messages.map((m) => (
-                     
                       <div
+                        onClick={() => {
+                         if(m.from === uid) {
+                          setMessageDeleteID(m.id);
+                          document.querySelector(".icon-btn-delete").style.display = "inline";
+                         }
+                         else {
+                           document.querySelector(".icon-btn-delete").style.display = "none";
+                         }
+                        }}
                         key={m.id}
-                        className={`message-row ${m.from === uid ? "message-row-me" : ""} `}
+                        className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
                       >
-                        
                         <div className="message-crud">
-
-                        <div style={{textAlign:'end'}}>
-                          ss</div>
-
-
-                        <div
-                        onClick={()=>setCrudMsg(true)}
-                        className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}
-                        >
-                          {m.imageUrl ? (
-                            <img
-                              src={m.imageUrl}
-                              alt="Sent"
-                              style={{
-                                maxWidth: "220px",
-                                borderRadius: "8px",
-                                display: "block",
-                              }}
+                          <div
+                            // onClick={() => setCrudMsg(true)}
+                            className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}
+                          >
+                            {m.imageUrl ? (
+                              <img
+                                src={m.imageUrl}
+                                alt="Sent"
+                                style={{
+                                  maxWidth: "220px",
+                                  borderRadius: "8px",
+                                  display: "block",
+                                }}
                               />
                             ) : (
                               m.text
-                          )}
-                          <span className="message-time">{m.time}</span>
+                            )}
+                            <span className="message-time">{m.time}</span>
+                          </div>
                         </div>
                       </div>
-                              </div>
                     ))
                   )}
                 </section>
@@ -1084,4 +1110,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard; 
