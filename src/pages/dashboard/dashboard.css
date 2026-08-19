@@ -565,8 +565,17 @@ body {
 }
 
 .message-row {
+  background-color: green;
   display: flex;
   justify-content: flex-start;
+}
+
+.message-crud{
+  display: flex;
+  flex-direction: column;
+  /* align-items: center;  */
+  max-width: 100%;
+  background-color: purple;
 }
 
 .message-row-me {
@@ -575,11 +584,13 @@ body {
 
 .message-bubble {
   position: relative;
-  max-width: 62%;
+  width: fit-content;
+  max-width: 100%;
   padding: 10px 14px 18px;
   border-radius: 16px;
   font-size: 14px;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .bubble-them {
@@ -1173,4 +1184,10 @@ body {
     flex: 1;
     text-align: center;
   }
+}
+
+.msg-con{
+  display: flex;
+  align-items: center; 
+  /* flex-direction: column; */
 }

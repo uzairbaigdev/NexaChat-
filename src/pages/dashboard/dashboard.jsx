@@ -32,8 +32,10 @@ const Dashboard = () => {
   const [sentReq, setSentReq] = useState([]); // requests the logged-in user has sent to others
   const [matchingAccounts, setMatchingAccounts] = useState([]);
   const [searchContacts, setSearchContacts] = useState("");
+  const [crudMsg ,setCrudMsg ] = useState(false)
   let searchPrefix = globalSearchInputValue.trim().toLowerCase();
   let [showList, setShowList] = useState(false);
+  
 
   // Controls the "3 dots" more-options menu next to the global search icon
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -977,19 +979,28 @@ const Dashboard = () => {
                   </div>
                 </header>
 
-                <section className="messages-area">
+                <section className="messages-area">                  
                   {messages.length === 0 ? (
                     <div className="messages-empty-state">
                       <p>No messages yet</p>
                     </div>
                   ) : (
                     messages.map((m) => (
+                     
                       <div
                         key={m.id}
-                        className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
+                        className={`message-row ${m.from === uid ? "message-row-me" : ""} `}
                       >
+                        
+                        <div className="message-crud">
+
+                        <div style={{textAlign:'end'}}>
+                          ss</div>
+
+
                         <div
-                          className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}
+                        onClick={()=>setCrudMsg(true)}
+                        className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"}`}
                         >
                           {m.imageUrl ? (
                             <img
@@ -1000,13 +1011,14 @@ const Dashboard = () => {
                                 borderRadius: "8px",
                                 display: "block",
                               }}
-                            />
-                          ) : (
-                            m.text
+                              />
+                            ) : (
+                              m.text
                           )}
                           <span className="message-time">{m.time}</span>
                         </div>
                       </div>
+                              </div>
                     ))
                   )}
                 </section>
