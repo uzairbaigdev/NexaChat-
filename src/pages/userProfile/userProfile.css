@@ -1,0 +1,292 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+:root {
+  --ink: #12131c;
+  --ink-soft: #6b7280;
+
+  --surface: #ffffff;
+  --surface-muted: #fafafc;
+  --border: #e7e8f0;
+
+  --indigo: #6366f1;
+  --indigo-deep: #4338ca;
+  --cyan: #22d3ee;
+  --grad-brand: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
+
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+}
+
+body {
+  background: var(--surface-muted);
+}
+
+/* ============ PAGE LAYOUT ============ */
+.userprofile-page {
+  min-height: 100vh;
+  width: 100%;
+  background: var(--surface-muted);
+}
+
+/* ============ TOP BAR (shared look with settings page) ============ */
+.settings-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+.back-link:hover {
+  color: var(--ink);
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.brand-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.brand-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.brand-word {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+/* ============ CONTENT ============ */
+.userprofile-content {
+  display: flex;
+  justify-content: center;
+  padding: 56px 24px;
+}
+
+.userprofile-container {
+  width: 100%;
+  max-width: 620px;
+}
+
+.settings-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1.9rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.settings-subtitle {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin-bottom: 36px;
+}
+
+/* ============ PROFILE HERO CARD ============ */
+.profile-hero-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 28px;
+  box-shadow: 0 1px 2px rgba(18, 19, 28, 0.03);
+}
+
+.profile-avatar-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 16px;
+}
+
+.profile-avatar-img {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 3px var(--border);
+  display: block;
+}
+
+.profile-avatar-fallback {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--grad-brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 2.2rem;
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 3px var(--border);
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  background: var(--grad-brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.avatar-edit-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.profile-display-name {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.profile-username {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+/* ============ SECTION / CARD (shared look with settings page) ============ */
+.settings-section {
+  margin-bottom: 28px;
+}
+
+.section-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  margin-bottom: 12px;
+}
+
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(18, 19, 28, 0.03);
+}
+
+/* ---- profile field row (read-only display, matches settings-row look) ---- */
+.profile-field {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.profile-field-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 18px;
+}
+
+.row-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-muted);
+  color: var(--indigo);
+}
+
+.row-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.row-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.row-desc {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 640px) {
+  .settings-topbar {
+    padding: 16px 20px;
+  }
+
+  .userprofile-content {
+    padding: 36px 16px;
+  }
+
+  .settings-title {
+    font-size: 1.6rem;
+  }
+
+  .profile-hero-card {
+    padding: 26px 18px;
+  }
+}

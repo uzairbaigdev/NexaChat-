@@ -1080,6 +1080,7 @@ const Dashboard = () => {
                    messages.map((m) => (
   <div
     key={m.id}
+    className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
     onClick={() => {
       if (m.from === uid) {
         setMessageDeleteID(m.id);
@@ -1177,4 +1178,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

@@ -85,6 +85,44 @@ const Settings = () => {
           <section className="settings-section">
             <h2 className="section-label">Account</h2>
 
+            {/* Your Profile */}
+            <div className="settings-card">
+              <button
+                type="button"
+                className="settings-row"
+                onClick={() => navigate("/settings/userprofile")}
+              >
+                <span className="row-icon">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 2a4.5 4.5 0 100 9 4.5 4.5 0 000-9zM3.5 18a6.5 6.5 0 0113 0 1 1 0 01-1 1h-11a1 1 0 01-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </span>
+
+                <span className="row-text">
+                  <span className="row-title">Profile</span>
+                  <span className="row-desc">
+                    View your profile as others see it
+                  </span>
+                </span>
+
+                <svg
+                  className="row-chevron"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.3 4.3a1 1 0 000 1.4L11.58 10l-4.3 4.3a1 1 0 01-1.42 0l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+
             {/* Edit Profile */}
             
             <div className="settings-card">
@@ -202,4 +240,3 @@ const Settings = () => {
 };
 
 export default Settings;
-

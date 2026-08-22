@@ -38,10 +38,7 @@ const EditProfileImage = () => {
       setImageURL(imageURL);
 
       const db = getFirestore();
-
-      // Save the image on the user's own profile document (merge so we
-      // don't overwrite existing fields like username/email). This is
-      // what makes the image show up everywhere in the dashboard.
+      
       await setDoc(
         doc(db, "users", auth.currentUser.uid),
         { imageURL: imageURL },
