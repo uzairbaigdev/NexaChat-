@@ -71,6 +71,7 @@ const Login = () => {
           username: user.displayName,
           email: user.email,
           UID:user.uid,
+          Visibility: "private",
           createdAt: serverTimestamp(),
         });
       }

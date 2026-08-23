@@ -161,8 +161,43 @@ const Settings = () => {
               </Link>
             </div>
 
+            {/* Privacy */}
+            <div className="settings-card">
+              <button
+                type="button"
+                className="settings-row"
+                onClick={() => navigate("/settings/privacy")}
+              > 
+                <span className="row-icon">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M10 2a4 4 0 00-4 4v2H5a1 1 0 00-1 1v8a1 1 0 001 1h10a1 1 0 001-1v-8a1 1 0 00-1-1h-1V6a4 4 0 00-4-4zm-2 6V6a2 2 0 114 0v2H8zm2 3a1.5 1.5 0 011.5 1.5c0 .61-.36 1.13-.88 1.37l.13 1.38a.63.63 0 01-.62.75h-.26a.63.63 0 01-.62-.75l.13-1.38A1.5 1.5 0 0110 11z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </span>
 
+                <span className="row-text">
+                  <span className="row-title">Privacy</span>
+                  <span className="row-desc">
+                    Manage your account contacts
+                  </span>
+                </span>
 
+                <svg
+                  className="row-chevron"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.3 4.3a1 1 0 000 1.4L11.58 10l-4.3 4.3a1 1 0 01-1.42 0l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
 
             {/* Logout */}
             <div className="settings-card">

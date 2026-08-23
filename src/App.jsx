@@ -11,6 +11,7 @@ import NotFound from "./pages/nofound/notFound";
 import EditUserName from "./pages/editUserName/EditUserName";
 import EditBio from "./pages/editBio/EditBio";
 import UserProfile from "./pages/userProfile/userProfile";
+import Privacy from "./pages/privacy/privacy";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
       <Route path="/settings/editprofile/editusername" element={<EditUserName />} />
       <Route path="/settings/editprofile/editBio" element={<EditBio />} />
       <Route path="/settings/userprofile" element={<UserProfile />} />
+      <Route path="/settings/privacy" element={<Privacy/>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

@@ -49,7 +49,8 @@ const Signup = () => {
       await setDoc(doc(db, "users", userCred.user.uid), {
         username: nameInp,
         email: emailInp,
-        UID:userCred.user.uid,  
+        UID:userCred.user.uid,
+        Visibility: "private", 
         createdAt: serverTimestamp()
       });
       //pushing UID to localStorage
@@ -85,6 +86,7 @@ const Signup = () => {
         await setDoc(doc(db, "users", user.uid), {
           username: user.displayName,
           email: user.email,
+          Visibility: "private",
           UID:user.uid,
           createdAt: serverTimestamp(),
         });
