@@ -1046,6 +1046,27 @@ body {
   animation: global-search-page-in 0.2s var(--ease);
 }
 
+/* ============ FULL-SCREEN PUBLIC MESSAGE UI ============ */
+.public-message-page {
+  grid-column: 1 / -1;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  animation: global-search-page-in 0.2s var(--ease);
+}
+
+.public-message-page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
 .requests-page-header {
   display: flex;
   align-items: center;

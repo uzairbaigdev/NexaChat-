@@ -35,7 +35,7 @@ const Dashboard = () => {
   const [searchContacts, setSearchContacts] = useState("");
   let searchPrefix = globalSearchInputValue.trim().toLowerCase();
   let [showList, setShowList] = useState(false);
-  
+
 
   // Controls the "3 dots" more-options menu next to the global search icon
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -44,6 +44,12 @@ const Dashboard = () => {
   // Controls the standalone "Requests" page opened from the "3 dots" menu
   const [isRequestsPageOpen, setIsRequestsPageOpen] = useState(false);
   const [requestsTab, setRequestsTab] = useState("received"); // "received" | "sent"
+
+  // Controls the full-screen message UI opened from a public account's "message" button
+  const [isPublicMessageOpen, setIsPublicMessageOpen] = useState(false);
+  const [publicMessageAccount, setPublicMessageAccount] = useState(null);
+  const [publicMessages, setPublicMessages] = useState([]);
+  const [publicMessageText, setPublicMessageText] = useState("");
   const uid = window.localStorage.getItem("uid");
   const navigate = useNavigate();
 
@@ -52,7 +58,7 @@ const Dashboard = () => {
   const imageInputRef = useRef(null);
 
   //handle message delete
-  const [messageDeleteID,setMessageDeleteID] = useState(null);
+  const [messageDeleteID, setMessageDeleteID] = useState(null);
   const [editingMessageID, setEditingMessageID] = useState(null);
 
   const activeChat = contacts.find((c) => c.id === activeId) || null;
@@ -170,6 +176,71 @@ const Dashboard = () => {
       unsubscribeReceived();
     };
   }, [activeChat, uid]);
+
+  // Listen for messages between the logged-in user and a public account in
+  // real time, for the full-screen message UI opened from global search.
+  useEffect(() => {
+    if (!publicMessageAccount) return;
+
+    const sentQuery = query(
+      collection(db, "messages"),
+      where("from", "==", uid),
+      where("to", "==", publicMessageAccount.id),
+    );
+    const receivedQuery = query(
+      collection(db, "messages"),
+      where("from", "==", publicMessageAccount.id),
+      where("to", "==", uid),
+    );
+
+    let sentMessages = [];
+    let receivedMessages = [];
+
+    const mergeAndSetPublicMessages = () => {
+      const list = [...sentMessages, ...receivedMessages];
+
+      list.sort((a, b) => {
+        const aTime = a.Time?.toMillis ? a.Time.toMillis() : 0;
+        const bTime = b.Time?.toMillis ? b.Time.toMillis() : 0;
+        return aTime - bTime;
+      });
+
+      setPublicMessages(list);
+    };
+
+    const unsubscribeSent = onSnapshot(
+      sentQuery,
+      (snapshot) => {
+        sentMessages = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        mergeAndSetPublicMessages();
+      },
+      (error) => {
+        console.error("Error listening to sent messages:", error);
+      },
+    );
+
+    const unsubscribeReceived = onSnapshot(
+      receivedQuery,
+      (snapshot) => {
+        receivedMessages = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        mergeAndSetPublicMessages();
+      },
+      (error) => {
+        console.error("Error listening to received messages:", error);
+      },
+    );
+
+    return () => {
+      unsubscribeSent();
+      unsubscribeReceived();
+    };
+  }, [publicMessageAccount, uid]);
 
   // get requests
 
@@ -374,44 +445,44 @@ const Dashboard = () => {
   };
 
   // Handle sending message
- const handleSendMessage = async () => {
-  if (!messageText.trim() || !activeChat) return;
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !activeChat) return;
 
-  try {
-    // Agar message edit ho raha hai
-    if (editingMessageID) {
-      await updateDoc(
-        doc(db, "messages", editingMessageID),
-        {
-          text: messageText.trim(),
-          edited: true,
-        }
-      );
+    try {
+      // Agar message edit ho raha hai
+      if (editingMessageID) {
+        await updateDoc(
+          doc(db, "messages", editingMessageID),
+          {
+            text: messageText.trim(),
+            edited: true,
+          }
+        );
 
-      console.log("Message updated successfully");
+        console.log("Message updated successfully");
+
+        setMessageText("");
+        setEditingMessageID(null);
+        setMessageDeleteID(null);
+
+        return;
+      }
+
+      // Naya message send hoga
+      const docRef = await addDoc(collection(db, "messages"), {
+        text: messageText.trim(),
+        to: activeChat.id,
+        from: uid,
+        Time: serverTimestamp(),
+      });
+
+      console.log("Document written with ID:", docRef.id);
 
       setMessageText("");
-      setEditingMessageID(null);
-      setMessageDeleteID(null);
-
-      return;
+    } catch (error) {
+      console.error("Error sending/updating message:", error);
     }
-
-    // Naya message send hoga
-    const docRef = await addDoc(collection(db, "messages"), {
-      text: messageText.trim(),
-      to: activeChat.id,
-      from: uid,
-      Time: serverTimestamp(),
-    });
-
-    console.log("Document written with ID:", docRef.id);
-
-    setMessageText("");
-  } catch (error) {
-    console.error("Error sending/updating message:", error);
-  }
-};
+  };
 
   // Opens the hidden file picker when the attach/image icon is clicked
   const handleImageIconClick = () => {
@@ -555,6 +626,41 @@ const Dashboard = () => {
     }
   };
 
+  // Opens the full-screen message UI for a public account from global search
+  const handleOpenPublicMessage = (account) => {
+    setPublicMessageAccount(account);
+    setIsPublicMessageOpen(true);
+  };
+
+  // Closes the full-screen message UI
+  const handleClosePublicMessage = () => {
+    setIsPublicMessageOpen(false);
+    setPublicMessageAccount(null);
+    setPublicMessages([]);
+    setPublicMessageText("");
+  };
+
+  // Sends a message from the full-screen public message UI
+  const handleSendPublicMessage = async () => {
+    if (!publicMessageText.trim() || !publicMessageAccount) return;
+
+    try {
+      const docRef = await addDoc(collection(db, "messages"), {
+        text: publicMessageText.trim(),
+        to: publicMessageAccount.id,
+        from: uid,
+        Time: serverTimestamp(),
+      });
+      // Add this account to local contacts if it isn't already there
+      setContacts([...contacts, publicMessageAccount]);
+
+      console.log("Document written with ID:", docRef.id);
+      setPublicMessageText("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
   ///accept request work ///
 
   const handleAccept = async (request) => {
@@ -577,15 +683,107 @@ const Dashboard = () => {
     }
   };
 
-
-
-
-
-
-
   return (
     <div className="dashboard">
-      {isRequestsPageOpen ? (
+      {isPublicMessageOpen ? (
+        // full-screen message UI for a public account (from global search)
+        <div className="public-message-page">
+          <header className="public-message-page-header">
+            <button
+              className="requests-back"
+              aria-label="Back to dashboard"
+              onClick={handleClosePublicMessage}
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M12.7 4.3a1 1 0 010 1.4L8.42 10l4.3 4.3a1 1 0 01-1.42 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+            <div className="chat-header-left">
+              <div className="avatar">
+                {publicMessageAccount?.imageURL ? (
+                  <img
+                    src={publicMessageAccount.imageURL}
+                    alt="Profile"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                  />
+                ) : (
+                  (publicMessageAccount?.username || publicMessageAccount?.email || "?")
+                    .charAt(0)
+                    .toUpperCase()
+                )}
+              </div>
+              <div className="chat-header-name">
+                {publicMessageAccount?.username || publicMessageAccount?.email}
+              </div>
+            </div>
+          </header>
+
+          <section className="messages-area">
+            {publicMessages.length === 0 ? (
+              <div className="messages-empty-state">
+                <p>No messages yet</p>
+              </div>
+            ) : (
+              publicMessages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
+                >
+                  <div className="message-crud">
+                    <div
+                      className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"
+                        }`}
+                    >
+                      {m.imageUrl ? (
+                        <img
+                          src={m.imageUrl}
+                          alt="Sent"
+                          style={{
+                            maxWidth: "220px",
+                            borderRadius: "8px",
+                            display: "block",
+                          }}
+                        />
+                      ) : (
+                        m.text
+                      )}
+
+                      <span className="message-time">{m.time}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </section>
+
+          <footer className="composer">
+            <div className="composer-input-shell">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={publicMessageText}
+                onChange={(e) => setPublicMessageText(e.target.value)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && handleSendPublicMessage()
+                }
+              />
+            </div>
+            <button
+              className="send-btn"
+              aria-label="Send message"
+              onClick={handleSendPublicMessage}
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path d="M3.4 2.4a1 1 0 00-1.36 1.28L4.5 10l-2.46 6.32A1 1 0 003.4 17.6l14-7a1 1 0 000-1.8l-14-7z" />
+              </svg>
+            </button>
+          </footer>
+        </div>
+      ) : isRequestsPageOpen ? (
         // request page
         <div className="requests-page">
           <header className="requests-page-header">
@@ -746,15 +944,32 @@ const Dashboard = () => {
                           </span>
                         </div>
                       </div>
-                      <button
-                        className="request-btn"
-                        onClick={() => handleSendRequest(account)}
-                      >
-                        <svg viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 00-6 6h12a6 6 0 00-6-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                        </svg>
-                        <span>Request</span>
-                      </button>
+                      {
+                        (account.Visibility === "public") ?
+                          <button
+                            className="request-btn"
+                            onClick={() => handleOpenPublicMessage(account)}
+                          >
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                              <path
+                                fillRule="evenodd"
+                                d="M2 5.5A2.5 2.5 0 014.5 3h11A2.5 2.5 0 0118 5.5v6A2.5 2.5 0 0115.5 14H9l-4 3.5V14H4.5A2.5 2.5 0 012 11.5v-6z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span>message</span>
+                          </button>
+                          :
+                          <button
+                            className="request-btn"
+                            onClick={() => handleSendRequest(account)}
+                          >
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 00-6 6h12a6 6 0 00-6-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                            </svg>
+                            <span>Request</span>
+                          </button>
+                      }
                     </div>
                   ))}
                 </div>
@@ -778,7 +993,7 @@ const Dashboard = () => {
                       d="M4 5.5C4 4.67157 4.67157 4 5.5 4H18.5C19.3284 4 20 4.67157 20 5.5V15.5C20 16.3284 19.3284 17 18.5 17H9L5 20.5V17H5.5C4.67157 17 4 16.3284 4 15.5V5.5Z"
                       fill="url(#brandGradDash)"
                     />
-                    
+
                     <defs>
                       <linearGradient
                         id="brandGradDash"
@@ -984,70 +1199,70 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="chat-header-actions">
-                  <button
-  className="icon-btn icon-btn-delete"
-  aria-label="Delete message"
-  style={{
-    display: messageDeleteID ? "inline-flex" : "none",
-  }}
-  onClick={async () => {
-    if (messageDeleteID) {
-      try {
-        await deleteDoc(
-          doc(db, "messages", messageDeleteID)
-        );
+                    <button
+                      className="icon-btn icon-btn-delete"
+                      aria-label="Delete message"
+                      style={{
+                        display: messageDeleteID ? "inline-flex" : "none",
+                      }}
+                      onClick={async () => {
+                        if (messageDeleteID) {
+                          try {
+                            await deleteDoc(
+                              doc(db, "messages", messageDeleteID)
+                            );
 
-        setMessageDeleteID(null);
-        setEditingMessageID(null);
+                            setMessageDeleteID(null);
+                            setEditingMessageID(null);
 
-        console.log("Message deleted successfully");
-      } catch (error) {
-        console.error("Error deleting message:", error);
-      }
-    }
-  }}
->
-  <svg viewBox="0 0 20 20" fill="currentColor">
-    <path
-      fillRule="evenodd"
-      d="M8.5 2a1 1 0 00-.894.553L7.191 3.5H4a1 1 0 000 2h.106l.732 9.15A2 2 0 006.832 16.5h6.336a2 2 0 001.994-1.85l.732-9.15H16a1 1 0 100-2h-3.191l-.415-.947A1 1 0 0011.5 2h-3zm-.5 5a1 1 0 011 1v5a1 1 0 11-2 0V8a1 1 0 011-1zm4 0a1 1 0 011 1v5a1 1 0 11-2 0V8a1 1 0 011-1z"
-      clipRule="evenodd"
-    />
-  </svg>
-</button>
+                            console.log("Message deleted successfully");
+                          } catch (error) {
+                            console.error("Error deleting message:", error);
+                          }
+                        }
+                      }}
+                    >
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M8.5 2a1 1 0 00-.894.553L7.191 3.5H4a1 1 0 000 2h.106l.732 9.15A2 2 0 006.832 16.5h6.336a2 2 0 001.994-1.85l.732-9.15H16a1 1 0 100-2h-3.191l-.415-.947A1 1 0 0011.5 2h-3zm-.5 5a1 1 0 011 1v5a1 1 0 11-2 0V8a1 1 0 011-1zm4 0a1 1 0 011 1v5a1 1 0 11-2 0V8a1 1 0 011-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
 
-{/* EDIT BUTTON */}
-<button
-  className="icon-btn icon-btn-edit"
-  aria-label="Edit message"
-  style={{
-    display: messageDeleteID ? "inline-flex" : "none",
-  }}
-  onClick={() => {
-    const selectedMessage = messages.find(
-      (message) => message.id === messageDeleteID
-    );
+                    {/* EDIT BUTTON */}
+                    <button
+                      className="icon-btn icon-btn-edit"
+                      aria-label="Edit message"
+                      style={{
+                        display: messageDeleteID ? "inline-flex" : "none",
+                      }}
+                      onClick={() => {
+                        const selectedMessage = messages.find(
+                          (message) => message.id === messageDeleteID
+                        );
 
-    if (!selectedMessage) return;
+                        if (!selectedMessage) return;
 
-    if (selectedMessage.imageUrl) {
-      alert("Image message cannot be edited.");
-      return;
-    }
+                        if (selectedMessage.imageUrl) {
+                          alert("Image message cannot be edited.");
+                          return;
+                        }
 
-    setMessageText(selectedMessage.text || "");
-    setEditingMessageID(selectedMessage.id);
-    setMessageDeleteID(null);
+                        setMessageText(selectedMessage.text || "");
+                        setEditingMessageID(selectedMessage.id);
+                        setMessageDeleteID(null);
 
-    document
-      .querySelector(".composer input[type='text']")
-      ?.focus();
-  }}
->
-  <svg viewBox="0 0 20 20" fill="currentColor">
-    <path d="M13.69 3.31a1.5 1.5 0 012.12 0l.88.88a1.5 1.5 0 010 2.12l-8.5 8.5-3.8.76.76-3.8 8.54-8.46zM4.3 16.7l4.6-.92 8.32-8.32-3.68-3.68-8.32 8.32-.92 4.6z" />
-  </svg>
-</button>
+                        document
+                          .querySelector(".composer input[type='text']")
+                          ?.focus();
+                      }}
+                    >
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.69 3.31a1.5 1.5 0 012.12 0l.88.88a1.5 1.5 0 010 2.12l-8.5 8.5-3.8.76.76-3.8 8.54-8.46zM4.3 16.7l4.6-.92 8.32-8.32-3.68-3.68-8.32 8.32-.92 4.6z" />
+                      </svg>
+                    </button>
 
                     <button className="icon-btn" aria-label="Voice call">
                       <svg viewBox="0 0 20 20" fill="currentColor">
@@ -1071,49 +1286,48 @@ const Dashboard = () => {
                   </div>
                 </header>
 
-                <section className="messages-area">                  
+                <section className="messages-area">
                   {messages.length === 0 ? (
                     <div className="messages-empty-state">
                       <p>No messages yet</p>
                     </div>
                   ) : (
-                   messages.map((m) => (
-  <div
-    key={m.id}
-    className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
-    onClick={() => {
-      if (m.from === uid) {
-        setMessageDeleteID(m.id);
-      } else {
-        setMessageDeleteID(null);
-      }
-    }}
-  >
-    <div className="message-crud">
-      <div
-        className={`message-bubble ${
-          m.from === uid ? "bubble-me" : "bubble-them"
-        }`}
-      >
-        {m.imageUrl ? (
-          <img
-            src={m.imageUrl}
-            alt="Sent"
-            style={{
-              maxWidth: "220px",
-              borderRadius: "8px",
-              display: "block",
-            }}
-          />
-        ) : (
-          m.text
-        )}
+                    messages.map((m) => (
+                      <div
+                        key={m.id}
+                        className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
+                        onClick={() => {
+                          if (m.from === uid) {
+                            setMessageDeleteID(m.id);
+                          } else {
+                            setMessageDeleteID(null);
+                          }
+                        }}
+                      >
+                        <div className="message-crud">
+                          <div
+                            className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"
+                              }`}
+                          >
+                            {m.imageUrl ? (
+                              <img
+                                src={m.imageUrl}
+                                alt="Sent"
+                                style={{
+                                  maxWidth: "220px",
+                                  borderRadius: "8px",
+                                  display: "block",
+                                }}
+                              />
+                            ) : (
+                              m.text
+                            )}
 
-        <span className="message-time">{m.time}</span>
-      </div>
-    </div>
-  </div>
-))
+                            <span className="message-time">{m.time}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </section>
 
