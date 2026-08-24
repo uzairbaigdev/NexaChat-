@@ -15,7 +15,10 @@ import {
   doc,
   updateDoc,
   onSnapshot,
-  deleteDoc
+  deleteDoc,
+  setDoc,
+  and,
+  or,
 } from "../../firebaseConfig";
 import RequestList from "./RequestList";
 
@@ -36,7 +39,6 @@ const Dashboard = () => {
   let searchPrefix = globalSearchInputValue.trim().toLowerCase();
   let [showList, setShowList] = useState(false);
 
-
   // Controls the "3 dots" more-options menu next to the global search icon
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const moreMenuRef = useRef(null);
@@ -46,10 +48,12 @@ const Dashboard = () => {
   const [requestsTab, setRequestsTab] = useState("received"); // "received" | "sent"
 
   // Controls the full-screen message UI opened from a public account's "message" button
+
   const [isPublicMessageOpen, setIsPublicMessageOpen] = useState(false);
   const [publicMessageAccount, setPublicMessageAccount] = useState(null);
   const [publicMessages, setPublicMessages] = useState([]);
   const [publicMessageText, setPublicMessageText] = useState("");
+
   const uid = window.localStorage.getItem("uid");
   const navigate = useNavigate();
 
@@ -248,8 +252,8 @@ const Dashboard = () => {
     try {
       const q = query(
         collection(db, "requests"),
-        where("to", "==", uid),
         where("status", "==", "pending"),
+        where("to", "==", uid),
       );
 
       const querySnapshot = await getDocs(q);
@@ -331,22 +335,25 @@ const Dashboard = () => {
     try {
       const sentQuery = query(
         collection(db, "requests"),
-        where("from", "==", uid),
-        where("status", "==", "accepted"),
+        and(
+          where("Visibility", "==", "public"),
+          or(where("from", "==", uid), where("to", "==", uid)),
+        ),
       );
+
       const receivedQuery = query(
         collection(db, "requests"),
-        where("to", "==", uid),
-        where("status", "==", "accepted"),
+        and(
+          where("status", "==", "accepted"),
+          or(where("from", "==", uid), where("to", "==", uid)),
+        ),
       );
 
       const [sentSnap, receivedSnap] = await Promise.all([
         getDocs(sentQuery),
         getDocs(receivedQuery),
       ]);
-
       const requestDocs = [...sentSnap.docs, ...receivedSnap.docs];
-
       if (requestDocs.length === 0) {
         setContacts([]);
         return;
@@ -357,12 +364,13 @@ const Dashboard = () => {
       await Promise.all(
         requestDocs.map(async (requestDoc) => {
           const requestData = requestDoc.data();
-
+          // console.log(requestData)
           // Find the other user in the conversation
           const targetUID =
             requestData.from === uid ? requestData.to : requestData.from;
 
           // Look up the other user directly by their document ID
+          console.log(targetUID);
           const userRef = doc(db, "users", targetUID);
           const userSnap = await getDoc(userRef);
 
@@ -451,13 +459,10 @@ const Dashboard = () => {
     try {
       // Agar message edit ho raha hai
       if (editingMessageID) {
-        await updateDoc(
-          doc(db, "messages", editingMessageID),
-          {
-            text: messageText.trim(),
-            edited: true,
-          }
-        );
+        await updateDoc(doc(db, "messages", editingMessageID), {
+          text: messageText.trim(),
+          edited: true,
+        });
 
         console.log("Message updated successfully");
 
@@ -683,6 +688,16 @@ const Dashboard = () => {
     }
   };
 
+  const setPublicUserInDb = async (account) => {
+    let docRef = collection(db, "requests");
+    let setData = await addDoc(docRef, {
+      ...account,
+      to: uid,
+      from: account.UID,
+    });
+    console.log(setData.id);
+  };
+
   return (
     <div className="dashboard">
       {isPublicMessageOpen ? (
@@ -708,10 +723,19 @@ const Dashboard = () => {
                   <img
                     src={publicMessageAccount.imageURL}
                     alt="Profile"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "50%",
+                    }}
                   />
                 ) : (
-                  (publicMessageAccount?.username || publicMessageAccount?.email || "?")
+                  (
+                    publicMessageAccount?.username ||
+                    publicMessageAccount?.email ||
+                    "?"
+                  )
                     .charAt(0)
                     .toUpperCase()
                 )}
@@ -733,10 +757,11 @@ const Dashboard = () => {
                   key={m.id}
                   className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
                 >
-                  <div className="message-crud">
+ss                  <div className="message-crud">
                     <div
-                      className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"
-                        }`}
+                      className={`message-bubble ${
+                        m.from === uid ? "bubble-me" : "bubble-them"
+                      }`}
                     >
                       {m.imageUrl ? (
                         <img
@@ -927,7 +952,12 @@ const Dashboard = () => {
                             <img
                               src={account.imageURL}
                               alt="Profile"
-                              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                borderRadius: "50%",
+                              }}
                             />
                           ) : (
                             (account.name || account.email || "?")
@@ -944,32 +974,35 @@ const Dashboard = () => {
                           </span>
                         </div>
                       </div>
-                      {
-                        (account.Visibility === "public") ?
-                          <button
-                            className="request-btn"
-                            onClick={() => handleOpenPublicMessage(account)}
-                          >
-                            <svg viewBox="0 0 20 20" fill="currentColor">
-                              <path
-                                fillRule="evenodd"
-                                d="M2 5.5A2.5 2.5 0 014.5 3h11A2.5 2.5 0 0118 5.5v6A2.5 2.5 0 0115.5 14H9l-4 3.5V14H4.5A2.5 2.5 0 012 11.5v-6z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>message</span>
-                          </button>
-                          :
-                          <button
-                            className="request-btn"
-                            onClick={() => handleSendRequest(account)}
-                          >
-                            <svg viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 00-6 6h12a6 6 0 00-6-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                            </svg>
-                            <span>Request</span>
-                          </button>
-                      }
+                      {account.Visibility === "public" ? (
+                        <button
+                          className="request-btn"
+                          onClick={() => {
+                            // 💢💢💢💢💢💢💢💢💢💢💢💢💢💢💢💢💢💢
+                            setPublicUserInDb(account);
+                            handleOpenPublicMessage(account);
+                          }}
+                        >
+                          <svg viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                              fillRule="evenodd"
+                              d="M2 5.5A2.5 2.5 0 014.5 3h11A2.5 2.5 0 0118 5.5v6A2.5 2.5 0 0115.5 14H9l-4 3.5V14H4.5A2.5 2.5 0 012 11.5v-6z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <span>message</span>
+                        </button>
+                      ) : (
+                        <button
+                          className="request-btn"
+                          onClick={() => handleSendRequest(account)}
+                        >
+                          <svg viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 00-6 6h12a6 6 0 00-6-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                          </svg>
+                          <span>Request</span>
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1116,7 +1149,12 @@ const Dashboard = () => {
                           <img
                             src={c.imageURL}
                             alt="Profile"
-                            style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              borderRadius: "50%",
+                            }}
                           />
                         ) : (
                           (c.name || c.email || "?").charAt(0).toUpperCase()
@@ -1145,7 +1183,12 @@ const Dashboard = () => {
                     <img
                       src={myImageURL}
                       alt="Profile"
-                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: "50%",
+                      }}
                     />
                   ) : (
                     <svg viewBox="0 0 20 20" fill="currentColor">
@@ -1184,7 +1227,12 @@ const Dashboard = () => {
                         <img
                           src={activeChat.imageURL}
                           alt="Profile"
-                          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            borderRadius: "50%",
+                          }}
                         />
                       ) : (
                         (activeChat.name || activeChat.email || "?")
@@ -1209,7 +1257,7 @@ const Dashboard = () => {
                         if (messageDeleteID) {
                           try {
                             await deleteDoc(
-                              doc(db, "messages", messageDeleteID)
+                              doc(db, "messages", messageDeleteID),
                             );
 
                             setMessageDeleteID(null);
@@ -1240,7 +1288,7 @@ const Dashboard = () => {
                       }}
                       onClick={() => {
                         const selectedMessage = messages.find(
-                          (message) => message.id === messageDeleteID
+                          (message) => message.id === messageDeleteID,
                         );
 
                         if (!selectedMessage) return;
@@ -1306,8 +1354,9 @@ const Dashboard = () => {
                       >
                         <div className="message-crud">
                           <div
-                            className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"
-                              }`}
+                            className={`message-bubble ${
+                              m.from === uid ? "bubble-me" : "bubble-them"
+                            }`}
                           >
                             {m.imageUrl ? (
                               <img
