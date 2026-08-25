@@ -757,11 +757,10 @@ const Dashboard = () => {
                   key={m.id}
                   className={`message-row ${m.from === uid ? "message-row-me" : ""}`}
                 >
-ss                  <div className="message-crud">
+                  <div className="message-crud">
                     <div
-                      className={`message-bubble ${
-                        m.from === uid ? "bubble-me" : "bubble-them"
-                      }`}
+                      className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"
+                        }`}
                     >
                       {m.imageUrl ? (
                         <img
@@ -940,7 +939,6 @@ ss                  <div className="message-crud">
                 <div className="global-search-results-header">
                   <span>
                     Found {matchingAccounts.length} matching account
-                    {matchingAccounts.length > 1 ? "s" : ""}
                   </span>
                 </div>
                 <div className="global-search-results-list">
@@ -978,7 +976,6 @@ ss                  <div className="message-crud">
                         <button
                           className="request-btn"
                           onClick={() => {
-                            // 💢💢💢💢💢💢💢💢💢💢💢💢💢💢💢💢💢💢
                             setPublicUserInDb(account);
                             handleOpenPublicMessage(account);
                           }}
@@ -1354,9 +1351,8 @@ ss                  <div className="message-crud">
                       >
                         <div className="message-crud">
                           <div
-                            className={`message-bubble ${
-                              m.from === uid ? "bubble-me" : "bubble-them"
-                            }`}
+                            className={`message-bubble ${m.from === uid ? "bubble-me" : "bubble-them"
+                              }`}
                           >
                             {m.imageUrl ? (
                               <img
