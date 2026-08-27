@@ -24,6 +24,7 @@ import RequestList from "./RequestList";
 
 const Dashboard = () => {
   const [messages, setMessages] = useState([]);
+  const [unreadCounts, setUnreadCounts] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [userEmail, setUserEmail] = useState("");
   const [myImageURL, setMyImageURL] = useState("");
@@ -479,6 +480,7 @@ const Dashboard = () => {
         to: activeChat.id,
         from: uid,
         Time: serverTimestamp(),
+        seen: false,
       });
 
       console.log("Document written with ID:", docRef.id);
@@ -488,6 +490,54 @@ const Dashboard = () => {
       console.error("Error sending/updating message:", error);
     }
   };
+
+  // Message database s aa rhe hn 
+  useEffect(() => {
+    if (!uid) return;
+
+    const q = query(
+      collection(db, "messages"),
+      where("to", "==", uid),
+      where("seen", "==", false)
+    );
+
+    const markMessagesAsSeen = async (senderId) => {
+      try {
+        const q = query(
+          collection(db, "messages"),
+          where("from", "==", senderId),
+          where("to", "==", uid),
+          where("seen", "==", false)
+        );
+
+        const snapshot = await getDocs(q);
+
+        const updates = snapshot.docs.map((message) =>
+          updateDoc(message.ref, {
+            seen: true,
+          })
+        );
+
+        await Promise.all(updates);
+      } catch (error) {
+        console.error("Error marking messages as seen:", error);
+      }
+    };
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const counts = {};
+
+      snapshot.docs.forEach((doc) => {
+        const message = doc.data();
+
+        counts[message.from] = (counts[message.from] || 0) + 1;
+      });
+
+      setUnreadCounts(counts);
+    });
+
+    return () => unsubscribe();
+  }, [uid]);
 
   // Opens the hidden file picker when the attach/image icon is clicked
   const handleImageIconClick = () => {
@@ -1139,7 +1189,10 @@ const Dashboard = () => {
                     <button
                       key={c.id}
                       className={`chat-item ${c.id === activeId ? "chat-item-active" : ""}`}
-                      onClick={() => setActiveId(c.id)}
+                      onClick={() => {
+                        setActiveId(c.id);
+                        markMessagesAsSeen(c.id);
+                      }}
                     >
                       <div className="avatar">
                         {c.imageURL ? (
@@ -1162,6 +1215,12 @@ const Dashboard = () => {
                           <span className="chat-item-name">
                             {c.name || c.email}
                           </span>
+
+                          {unreadCounts[c.id] > 0 && (
+                            <span className="unread-badge">
+                              {unreadCounts[c.id]}
+                            </span>
+                          )}
                         </div>
                         {c.name && c.email && (
                           <div className="chat-item-bottom">
