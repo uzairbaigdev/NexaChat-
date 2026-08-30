@@ -79,6 +79,30 @@ const Dashboard = () => {
     );
   };
 
+  
+  const markMessagesAsSeen = async (senderId) => {
+  try {
+    const q = query(
+      collection(db, "messages"),
+      where("from", "==", senderId),
+      where("to", "==", uid),
+      where("seen", "==", false)
+    );
+
+    const snapshot = await getDocs(q);
+
+    await Promise.all(
+      snapshot.docs.map((message) =>
+        updateDoc(message.ref, {
+          seen: true,
+        })
+      )
+    );
+  } catch (error) {
+    console.error("Error marking messages as seen:", error);
+  }
+};
+
   //working on global search filtering accounts
   useEffect(() => {
     const search = globalSearchInputValue.trim().toLowerCase();
@@ -500,30 +524,7 @@ const Dashboard = () => {
       where("to", "==", uid),
       where("seen", "==", false)
     );
-
-    const markMessagesAsSeen = async (senderId) => {
-      try {
-        const q = query(
-          collection(db, "messages"),
-          where("from", "==", senderId),
-          where("to", "==", uid),
-          where("seen", "==", false)
-        );
-
-        const snapshot = await getDocs(q);
-
-        const updates = snapshot.docs.map((message) =>
-          updateDoc(message.ref, {
-            seen: true,
-          })
-        );
-
-        await Promise.all(updates);
-      } catch (error) {
-        console.error("Error marking messages as seen:", error);
-      }
-    };
-
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const counts = {};
 
